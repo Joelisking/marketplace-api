@@ -1,0 +1,1252 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Marketplace API",
+    "version": "1.0.0",
+    "description": "Multi-vendor marketplace API — Express, TypeScript, Prisma. Auto-generated from Zod schemas."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000",
+      "description": "Local development"
+    },
+    {
+      "url": "https://api.yourdomain.com",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Authentication endpoints"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Paste an **access token** here."
+      }
+    },
+    "schemas": {
+      "IDParam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "cuid",
+            "description": "Resource ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "SlugParam": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Resource slug"
+          }
+        },
+        "required": [
+          "slug"
+        ]
+      },
+      "PaginationQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "1-based page number"
+          }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "pageSize": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "page",
+          "pageSize"
+        ]
+      },
+      "RegisterBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "LoginBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "RefreshBody": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "VENDOR"
+            ]
+          },
+          "storeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "storeId"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "refreshToken": {
+            "type": "string"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string",
+                "format": "email"
+              },
+              "role": {
+                "type": "string",
+                "enum": [
+                  "CUSTOMER",
+                  "VENDOR"
+                ]
+              },
+              "storeId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "email",
+              "role",
+              "storeId"
+            ]
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "user"
+        ]
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "CUSTOMER",
+              "VENDOR"
+            ]
+          },
+          "storeId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "role",
+          "storeId"
+        ]
+      },
+      "UserIdParam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "cuid",
+            "description": "Resource ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ProductBase": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "visibleMarket": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "price",
+          "stock",
+          "imageUrl"
+        ]
+      },
+      "ProductCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "visibleMarket": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "name",
+          "price",
+          "stock",
+          "imageUrl"
+        ]
+      },
+      "ProductUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "visibleMarket": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "ProductResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "stock": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "visibleMarket": {
+            "type": "boolean",
+            "default": true
+          },
+          "id": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "price",
+          "stock",
+          "imageUrl",
+          "id",
+          "storeId"
+        ]
+      },
+      "ProductListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "price": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "stock": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "imageUrl": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "visibleMarket": {
+                  "type": "boolean",
+                  "default": true
+                },
+                "id": {
+                  "type": "string"
+                },
+                "storeId": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "price",
+                "stock",
+                "imageUrl",
+                "id",
+                "storeId"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "pageSize": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "page",
+              "pageSize"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "ProductIdParam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "cuid",
+            "description": "Resource ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ProductListQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "1-based page number"
+          },
+          "storeId": {
+            "type": "string"
+          }
+        }
+      },
+      "ProductSearchQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "limit": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          }
+        }
+      },
+      "StoreCreate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "StoreUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$"
+          },
+          "logoUrl": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      },
+      "StoreResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "ownerId",
+          "name",
+          "slug",
+          "logoUrl"
+        ]
+      },
+      "StoreListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "ownerId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "logoUrl": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "ownerId",
+                "name",
+                "slug",
+                "logoUrl"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "pageSize": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "page",
+              "pageSize"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "StoreSearchQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          },
+          "limit": {
+            "type": "string",
+            "pattern": "^\\d+$"
+          }
+        }
+      },
+      "StoreSlugParam": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Resource slug"
+          }
+        },
+        "required": [
+          "slug"
+        ]
+      },
+      "StoreListQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "1-based page number"
+          }
+        }
+      },
+      "CheckoutItem": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "cuid"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ]
+      },
+      "CheckoutBody": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "productId": {
+                  "type": "string",
+                  "format": "cuid"
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "productId",
+                "quantity"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "OrderItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "price": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "productId",
+          "quantity",
+          "price"
+        ]
+      },
+      "OrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "customerId": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PROCESSING",
+              "SHIPPED",
+              "DELIVERED"
+            ]
+          },
+          "paymentStatus": {
+            "type": "string",
+            "enum": [
+              "UNPAID",
+              "PAID"
+            ]
+          },
+          "total": {
+            "type": "integer"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "productId": {
+                  "type": "string"
+                },
+                "quantity": {
+                  "type": "integer"
+                },
+                "price": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "productId",
+                "quantity",
+                "price"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "customerId",
+          "storeId",
+          "status",
+          "paymentStatus",
+          "total",
+          "items"
+        ]
+      },
+      "OrderListResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "customerId": {
+                  "type": "string"
+                },
+                "storeId": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "PENDING",
+                    "PROCESSING",
+                    "SHIPPED",
+                    "DELIVERED"
+                  ]
+                },
+                "paymentStatus": {
+                  "type": "string",
+                  "enum": [
+                    "UNPAID",
+                    "PAID"
+                  ]
+                },
+                "total": {
+                  "type": "integer"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "productId": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "integer"
+                      },
+                      "price": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "productId",
+                      "quantity",
+                      "price"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "customerId",
+                "storeId",
+                "status",
+                "paymentStatus",
+                "total",
+                "items"
+              ]
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "page": {
+                "type": "integer"
+              },
+              "pageSize": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "total",
+              "page",
+              "pageSize"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "meta"
+        ]
+      },
+      "OrderIdParam": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "cuid",
+            "description": "Resource ID"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "OrderListQuery": {
+        "type": "object",
+        "properties": {
+          "q": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "page": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "1-based page number"
+          },
+          "storeId": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER",
+                            "VENDOR"
+                          ]
+                        },
+                        "storeId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "role",
+                        "storeId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "refreshToken",
+                    "user"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER",
+                            "VENDOR"
+                          ]
+                        },
+                        "storeId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "role",
+                        "storeId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "refreshToken",
+                    "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User logged in successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER",
+                            "VENDOR"
+                          ]
+                        },
+                        "storeId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "role",
+                        "storeId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "refreshToken",
+                    "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "refreshToken": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "refreshToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER",
+                            "VENDOR"
+                          ]
+                        },
+                        "storeId": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "email",
+                        "role",
+                        "storeId"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "accessToken",
+                    "refreshToken",
+                    "user"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}
