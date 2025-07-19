@@ -5,9 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 20
+      - uses: pnpm/action-setup@v2
       - run: pnpm install
       - run: pnpm lint
 
@@ -29,9 +30,10 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v3
         with:
           node-version: 20
+      - uses: pnpm/action-setup@v2
       - run: pnpm install
       - run: pnpm test
       - name: Verify OpenAPI spec is up-to-date
