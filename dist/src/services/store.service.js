@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,14 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.listStores = listStores;
-exports.countStores = countStores;
-const prisma_1 = require("../lib/prisma");
-function listStores(params) {
+import { prisma } from '../lib/prisma';
+export function listStores(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const { q, page, limit } = params;
-        const stores = yield prisma_1.prisma.store.findMany({
+        const stores = yield prisma.store.findMany({
             where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
             skip: (page - 1) * limit,
             take: limit,
@@ -35,6 +31,6 @@ function listStores(params) {
         });
     });
 }
-function countStores(where) {
-    return prisma_1.prisma.store.count({ where });
+export function countStores(where) {
+    return prisma.store.count({ where });
 }

@@ -11,4 +11,8 @@ export default {
       },
     ],
   },
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+  moduleNameMapper: {
+    '^../src/openapi$': '<rootDir>/tests/mocks/openapi.ts',
+  },
 };

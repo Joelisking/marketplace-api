@@ -76,6 +76,9 @@ docker-compose ps
 ### Development
 
 ```bash
+# Run Open API spec
+pnpm generate:spec
+
 # Rebuild API image
 docker-compose build api
 
@@ -100,7 +103,7 @@ docker-compose exec api npx prisma validate
 # Format schema
 docker-compose exec api npx prisma format
 
-# Generate client
+# Generate client after deploying
 docker-compose exec api npx prisma generate
 
 # Pull schema from DB

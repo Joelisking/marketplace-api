@@ -1,17 +1,14 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PageMeta = exports.PaginationQuery = exports.SlugParam = exports.IDParam = void 0;
-const zod_1 = require("zod");
-exports.IDParam = zod_1.z.object({
-    id: zod_1.z.string().describe('Resource ID'),
+import { z } from 'zod';
+export const IDParam = z.object({
+    id: z.string().describe('Resource ID'),
 });
-exports.SlugParam = zod_1.z.object({
-    slug: zod_1.z.string().describe('Resource slug'),
+export const SlugParam = z.object({
+    slug: z.string().describe('Resource slug'),
 });
-exports.PaginationQuery = zod_1.z
+export const PaginationQuery = z
     .object({
-    q: zod_1.z.string().optional().describe('Search query'),
-    page: zod_1.z
+    q: z.string().optional().describe('Search query'),
+    page: z
         .string()
         .regex(/^\d+$/)
         .transform((s) => parseInt(s, 10))
@@ -19,8 +16,8 @@ exports.PaginationQuery = zod_1.z
         .describe('1-based page number'),
 })
     .partial();
-exports.PageMeta = zod_1.z.object({
-    total: zod_1.z.number().int(),
-    page: zod_1.z.number().int(),
-    pageSize: zod_1.z.number().int(),
+export const PageMeta = z.object({
+    total: z.number().int(),
+    page: z.number().int(),
+    pageSize: z.number().int(),
 });

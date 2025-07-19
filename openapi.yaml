@@ -1,1252 +1,2320 @@
-{
-  "openapi": "3.1.0",
-  "info": {
-    "title": "Marketplace API",
-    "version": "1.0.0",
-    "description": "Multi-vendor marketplace API — Express, TypeScript, Prisma. Auto-generated from Zod schemas."
-  },
-  "servers": [
-    {
-      "url": "http://localhost:4000",
-      "description": "Local development"
-    },
-    {
-      "url": "https://api.yourdomain.com",
-      "description": "Production"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
-  "tags": [
-    {
-      "name": "auth",
-      "description": "Authentication endpoints"
-    }
-  ],
-  "components": {
-    "securitySchemes": {
-      "bearerAuth": {
-        "type": "http",
-        "scheme": "bearer",
-        "bearerFormat": "JWT",
-        "description": "Paste an **access token** here."
-      }
-    },
-    "schemas": {
-      "IDParam": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "cuid",
-            "description": "Resource ID"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "SlugParam": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Resource slug"
-          }
-        },
-        "required": [
-          "slug"
-        ]
-      },
-      "PaginationQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string",
-            "description": "Search query"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$",
-            "description": "1-based page number"
-          }
-        }
-      },
-      "PageMeta": {
-        "type": "object",
-        "properties": {
-          "total": {
-            "type": "integer"
-          },
-          "page": {
-            "type": "integer"
-          },
-          "pageSize": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "total",
-          "page",
-          "pageSize"
-        ]
-      },
-      "RegisterBody": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
-      },
-      "LoginBody": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "password": {
-            "type": "string",
-            "minLength": 8
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ]
-      },
-      "RefreshBody": {
-        "type": "object",
-        "properties": {
-          "refreshToken": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "refreshToken"
-        ]
-      },
-      "UserResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "CUSTOMER",
-              "VENDOR"
-            ]
-          },
-          "storeId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "role",
-          "storeId"
-        ]
-      },
-      "AuthResponse": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string"
-          },
-          "refreshToken": {
-            "type": "string"
-          },
-          "user": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "email": {
-                "type": "string",
-                "format": "email"
-              },
-              "role": {
-                "type": "string",
-                "enum": [
-                  "CUSTOMER",
-                  "VENDOR"
-                ]
-              },
-              "storeId": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "email",
-              "role",
-              "storeId"
-            ]
-          }
-        },
-        "required": [
-          "accessToken",
-          "refreshToken",
-          "user"
-        ]
-      },
-      "MeResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "CUSTOMER",
-              "VENDOR"
-            ]
-          },
-          "storeId": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "email",
-          "role",
-          "storeId"
-        ]
-      },
-      "UserIdParam": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "cuid",
-            "description": "Resource ID"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "ProductBase": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "stock": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "imageUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "visibleMarket": {
-            "type": "boolean",
-            "default": true
-          }
-        },
-        "required": [
-          "name",
-          "price",
-          "stock",
-          "imageUrl"
-        ]
-      },
-      "ProductCreate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "stock": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "imageUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "visibleMarket": {
-            "type": "boolean",
-            "default": true
-          }
-        },
-        "required": [
-          "name",
-          "price",
-          "stock",
-          "imageUrl"
-        ]
-      },
-      "ProductUpdate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "stock": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "imageUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "visibleMarket": {
-            "type": "boolean",
-            "default": true
-          }
-        }
-      },
-      "ProductResponse": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "price": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "stock": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "imageUrl": {
-            "type": "string",
-            "format": "uri"
-          },
-          "visibleMarket": {
-            "type": "boolean",
-            "default": true
-          },
-          "id": {
-            "type": "string"
-          },
-          "storeId": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "name",
-          "price",
-          "stock",
-          "imageUrl",
-          "id",
-          "storeId"
-        ]
-      },
-      "ProductListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "minLength": 1
-                },
-                "price": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "stock": {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                "imageUrl": {
-                  "type": "string",
-                  "format": "uri"
-                },
-                "visibleMarket": {
-                  "type": "boolean",
-                  "default": true
-                },
-                "id": {
-                  "type": "string"
-                },
-                "storeId": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name",
-                "price",
-                "stock",
-                "imageUrl",
-                "id",
-                "storeId"
-              ]
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "integer"
-              },
-              "page": {
-                "type": "integer"
-              },
-              "pageSize": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "total",
-              "page",
-              "pageSize"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "meta"
-        ]
-      },
-      "ProductIdParam": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "cuid",
-            "description": "Resource ID"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "ProductListQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string",
-            "description": "Search query"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$",
-            "description": "1-based page number"
-          },
-          "storeId": {
-            "type": "string"
-          }
-        }
-      },
-      "ProductSearchQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string"
-          },
-          "category": {
-            "type": "string"
-          },
-          "storeId": {
-            "type": "string"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$"
-          },
-          "limit": {
-            "type": "string",
-            "pattern": "^\\d+$"
-          }
-        }
-      },
-      "StoreCreate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "slug": {
-            "type": "string",
-            "pattern": "^[a-z0-9-]+$"
-          },
-          "logoUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        },
-        "required": [
-          "name",
-          "slug"
-        ]
-      },
-      "StoreUpdate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1
-          },
-          "slug": {
-            "type": "string",
-            "pattern": "^[a-z0-9-]+$"
-          },
-          "logoUrl": {
-            "type": "string",
-            "format": "uri"
-          }
-        }
-      },
-      "StoreResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "ownerId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "slug": {
-            "type": "string"
-          },
-          "logoUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "ownerId",
-          "name",
-          "slug",
-          "logoUrl"
-        ]
-      },
-      "StoreListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "ownerId": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "slug": {
-                  "type": "string"
-                },
-                "logoUrl": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "id",
-                "ownerId",
-                "name",
-                "slug",
-                "logoUrl"
-              ]
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "integer"
-              },
-              "page": {
-                "type": "integer"
-              },
-              "pageSize": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "total",
-              "page",
-              "pageSize"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "meta"
-        ]
-      },
-      "StoreSearchQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$"
-          },
-          "limit": {
-            "type": "string",
-            "pattern": "^\\d+$"
-          }
-        }
-      },
-      "StoreSlugParam": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Resource slug"
-          }
-        },
-        "required": [
-          "slug"
-        ]
-      },
-      "StoreListQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string",
-            "description": "Search query"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$",
-            "description": "1-based page number"
-          }
-        }
-      },
-      "CheckoutItem": {
-        "type": "object",
-        "properties": {
-          "productId": {
-            "type": "string",
-            "format": "cuid"
-          },
-          "quantity": {
-            "type": "integer",
-            "minimum": 1
-          }
-        },
-        "required": [
-          "productId",
-          "quantity"
-        ]
-      },
-      "CheckoutBody": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "productId": {
-                  "type": "string",
-                  "format": "cuid"
-                },
-                "quantity": {
-                  "type": "integer",
-                  "minimum": 1
-                }
-              },
-              "required": [
-                "productId",
-                "quantity"
-              ]
-            },
-            "minItems": 1
-          }
-        },
-        "required": [
-          "items"
-        ]
-      },
-      "OrderItemResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "productId": {
-            "type": "string"
-          },
-          "quantity": {
-            "type": "integer"
-          },
-          "price": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "productId",
-          "quantity",
-          "price"
-        ]
-      },
-      "OrderResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "customerId": {
-            "type": "string"
-          },
-          "storeId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "PROCESSING",
-              "SHIPPED",
-              "DELIVERED"
-            ]
-          },
-          "paymentStatus": {
-            "type": "string",
-            "enum": [
-              "UNPAID",
-              "PAID"
-            ]
-          },
-          "total": {
-            "type": "integer"
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "productId": {
-                  "type": "string"
-                },
-                "quantity": {
-                  "type": "integer"
-                },
-                "price": {
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "id",
-                "productId",
-                "quantity",
-                "price"
-              ]
-            }
-          }
-        },
-        "required": [
-          "id",
-          "customerId",
-          "storeId",
-          "status",
-          "paymentStatus",
-          "total",
-          "items"
-        ]
-      },
-      "OrderListResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "customerId": {
-                  "type": "string"
-                },
-                "storeId": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "string",
-                  "enum": [
-                    "PENDING",
-                    "PROCESSING",
-                    "SHIPPED",
-                    "DELIVERED"
-                  ]
-                },
-                "paymentStatus": {
-                  "type": "string",
-                  "enum": [
-                    "UNPAID",
-                    "PAID"
-                  ]
-                },
-                "total": {
-                  "type": "integer"
-                },
-                "items": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "string"
-                      },
-                      "productId": {
-                        "type": "string"
-                      },
-                      "quantity": {
-                        "type": "integer"
-                      },
-                      "price": {
-                        "type": "integer"
-                      }
-                    },
-                    "required": [
-                      "id",
-                      "productId",
-                      "quantity",
-                      "price"
-                    ]
-                  }
-                }
-              },
-              "required": [
-                "id",
-                "customerId",
-                "storeId",
-                "status",
-                "paymentStatus",
-                "total",
-                "items"
-              ]
-            }
-          },
-          "meta": {
-            "type": "object",
-            "properties": {
-              "total": {
-                "type": "integer"
-              },
-              "page": {
-                "type": "integer"
-              },
-              "pageSize": {
-                "type": "integer"
-              }
-            },
-            "required": [
-              "total",
-              "page",
-              "pageSize"
-            ]
-          }
-        },
-        "required": [
-          "items",
-          "meta"
-        ]
-      },
-      "OrderIdParam": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "cuid",
-            "description": "Resource ID"
-          }
-        },
-        "required": [
-          "id"
-        ]
-      },
-      "OrderListQuery": {
-        "type": "object",
-        "properties": {
-          "q": {
-            "type": "string",
-            "description": "Search query"
-          },
-          "page": {
-            "type": "string",
-            "pattern": "^\\d+$",
-            "description": "1-based page number"
-          },
-          "storeId": {
-            "type": "string"
-          }
-        }
-      }
-    },
-    "parameters": {}
-  },
-  "paths": {
-    "/auth/register": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "User registered successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "CUSTOMER",
-                            "VENDOR"
-                          ]
-                        },
-                        "storeId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "role",
-                        "storeId"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "user"
-                  ]
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Email already in use",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "CUSTOMER",
-                            "VENDOR"
-                          ]
-                        },
-                        "storeId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "role",
-                        "storeId"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "user"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/login": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string",
-                    "format": "email"
-                  },
-                  "password": {
-                    "type": "string",
-                    "minLength": 8
-                  }
-                },
-                "required": [
-                  "email",
-                  "password"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "User logged in successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "CUSTOMER",
-                            "VENDOR"
-                          ]
-                        },
-                        "storeId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "role",
-                        "storeId"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "user"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/refresh": {
-      "post": {
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "refreshToken": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "refreshToken"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Token refreshed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "accessToken": {
-                      "type": "string"
-                    },
-                    "refreshToken": {
-                      "type": "string"
-                    },
-                    "user": {
-                      "type": "object",
-                      "properties": {
-                        "id": {
-                          "type": "string"
-                        },
-                        "email": {
-                          "type": "string",
-                          "format": "email"
-                        },
-                        "role": {
-                          "type": "string",
-                          "enum": [
-                            "CUSTOMER",
-                            "VENDOR"
-                          ]
-                        },
-                        "storeId": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "id",
-                        "email",
-                        "role",
-                        "storeId"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "accessToken",
-                    "refreshToken",
-                    "user"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "webhooks": {}
-}
+openapi: 3.1.0
+info:
+    title: 'Marketplace API'
+    version: 1.0.0
+    description: 'Multi-vendor marketplace API — Express, TypeScript, Prisma. Auto-generated from Zod schemas.'
+servers:
+    -
+        url: 'http://localhost:4000'
+        description: 'Local development'
+    -
+        url: 'https://api.yourdomain.com'
+        description: Production
+security:
+    -
+        bearerAuth: []
+tags:
+    -
+        name: auth
+        description: 'Authentication endpoints'
+    -
+        name: catalogue
+        description: 'Product and store catalogue endpoints'
+    -
+        name: vendor
+        description: 'Vendor dashboard and management endpoints'
+    -
+        name: analytics
+        description: 'Analytics and best-selling products endpoints'
+    -
+        name: upload
+        description: 'Image upload endpoints'
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: 'Paste an **access token** here.'
+    schemas:
+        AuthResponse:
+            type: object
+            properties:
+                accessToken:
+                    type: string
+                refreshToken:
+                    type: string
+                user:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        email:
+                            type: string
+                            format: email
+                        role:
+                            type: string
+                            enum:
+                                - CUSTOMER
+                                - VENDOR
+                        storeId:
+                            type:
+                                - string
+                                - 'null'
+                    required:
+                        - id
+                        - email
+                        - role
+                        - storeId
+            required:
+                - accessToken
+                - refreshToken
+                - user
+        CheckoutBody:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            productId:
+                                type: string
+                                format: cuid
+                            quantity:
+                                type: integer
+                                minimum: 1
+                        required:
+                            - productId
+                            - quantity
+                    minItems: 1
+            required:
+                - items
+        CheckoutItem:
+            type: object
+            properties:
+                productId:
+                    type: string
+                    format: cuid
+                quantity:
+                    type: integer
+                    minimum: 1
+            required:
+                - productId
+                - quantity
+        IDParam:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 'Resource ID'
+            required:
+                - id
+        LoginBody:
+            type: object
+            properties:
+                email:
+                    type: string
+                    format: email
+                password:
+                    type: string
+                    minLength: 8
+            required:
+                - email
+                - password
+        MeResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                email:
+                    type: string
+                    format: email
+                role:
+                    type: string
+                    enum:
+                        - CUSTOMER
+                        - VENDOR
+                storeId:
+                    type:
+                        - string
+                        - 'null'
+            required:
+                - id
+                - email
+                - role
+                - storeId
+        OrderIdParam:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 'Resource ID'
+            required:
+                - id
+        OrderItemResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                productId:
+                    type: string
+                quantity:
+                    type: integer
+                price:
+                    type: integer
+            required:
+                - id
+                - productId
+                - quantity
+                - price
+        OrderListQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                    description: 'Search query'
+                page:
+                    type: string
+                    pattern: ^\d+$
+                    description: '1-based page number'
+                storeId:
+                    type: string
+        OrderListResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            customerId:
+                                type: string
+                            storeId:
+                                type: string
+                            status:
+                                type: string
+                                enum:
+                                    - PENDING
+                                    - PROCESSING
+                                    - SHIPPED
+                                    - DELIVERED
+                            paymentStatus:
+                                type: string
+                                enum:
+                                    - UNPAID
+                                    - PAID
+                            total:
+                                type: integer
+                            items:
+                                type: array
+                                items:
+                                    type: object
+                                    properties: {id: {type: string}, productId: {type: string}, quantity: {type: integer}, price: {type: integer}}
+                                    required: [id, productId, quantity, price]
+                        required:
+                            - id
+                            - customerId
+                            - storeId
+                            - status
+                            - paymentStatus
+                            - total
+                            - items
+                meta:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
+                        page:
+                            type: integer
+                        pageSize:
+                            type: integer
+                    required:
+                        - total
+                        - page
+                        - pageSize
+            required:
+                - items
+                - meta
+        OrderResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                customerId:
+                    type: string
+                storeId:
+                    type: string
+                status:
+                    type: string
+                    enum:
+                        - PENDING
+                        - PROCESSING
+                        - SHIPPED
+                        - DELIVERED
+                paymentStatus:
+                    type: string
+                    enum:
+                        - UNPAID
+                        - PAID
+                total:
+                    type: integer
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            productId:
+                                type: string
+                            quantity:
+                                type: integer
+                            price:
+                                type: integer
+                        required:
+                            - id
+                            - productId
+                            - quantity
+                            - price
+            required:
+                - id
+                - customerId
+                - storeId
+                - status
+                - paymentStatus
+                - total
+                - items
+        PageMeta:
+            type: object
+            properties:
+                total:
+                    type: integer
+                page:
+                    type: integer
+                pageSize:
+                    type: integer
+            required:
+                - total
+                - page
+                - pageSize
+        PaginationQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                    description: 'Search query'
+                page:
+                    type: string
+                    pattern: ^\d+$
+                    description: '1-based page number'
+        ProductBase:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                price:
+                    type: integer
+                    minimum: 0
+                stock:
+                    type: integer
+                    minimum: 0
+                visibleMarket:
+                    type: boolean
+                    default: true
+            required:
+                - name
+                - price
+                - stock
+        ProductCreate:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                price:
+                    type: integer
+                    minimum: 0
+                stock:
+                    type: integer
+                    minimum: 0
+                visibleMarket:
+                    type: boolean
+                    default: true
+                images:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            fileName:
+                                type: string
+                                minLength: 1
+                            fileUrl:
+                                type: string
+                                format: uri
+                            altText:
+                                type: string
+                            isPrimary:
+                                type: boolean
+                                default: false
+                            sortOrder:
+                                type: integer
+                                minimum: 0
+                                default: 0
+                        required:
+                            - fileName
+                            - fileUrl
+            required:
+                - name
+                - price
+                - stock
+        ProductIdParam:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 'Resource ID'
+            required:
+                - id
+        ProductImageBase:
+            type: object
+            properties:
+                fileName:
+                    type: string
+                    minLength: 1
+                fileUrl:
+                    type: string
+                    format: uri
+                altText:
+                    type: string
+                isPrimary:
+                    type: boolean
+                    default: false
+                sortOrder:
+                    type: integer
+                    minimum: 0
+                    default: 0
+            required:
+                - fileName
+                - fileUrl
+        ProductImageCreate:
+            type: object
+            properties:
+                fileName:
+                    type: string
+                    minLength: 1
+                fileUrl:
+                    type: string
+                    format: uri
+                altText:
+                    type: string
+                isPrimary:
+                    type: boolean
+                    default: false
+                sortOrder:
+                    type: integer
+                    minimum: 0
+                    default: 0
+            required:
+                - fileName
+                - fileUrl
+        ProductImageIdParam:
+            type: object
+            properties:
+                productId:
+                    type: string
+                imageId:
+                    type: string
+            required:
+                - productId
+                - imageId
+        ProductImageReorderRequest:
+            type: object
+            properties:
+                imageIds:
+                    type: array
+                    items:
+                        type: string
+                    minItems: 1
+            required:
+                - imageIds
+        ProductImageResponse:
+            type: object
+            properties:
+                fileName:
+                    type: string
+                    minLength: 1
+                fileUrl:
+                    type: string
+                    format: uri
+                altText:
+                    type: string
+                isPrimary:
+                    type: boolean
+                    default: false
+                sortOrder:
+                    type: integer
+                    minimum: 0
+                    default: 0
+                id:
+                    type: string
+                productId:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+            required:
+                - fileName
+                - fileUrl
+                - id
+                - productId
+                - createdAt
+        ProductImageUpdate:
+            type: object
+            properties:
+                fileName:
+                    type: string
+                    minLength: 1
+                fileUrl:
+                    type: string
+                    format: uri
+                altText:
+                    type: string
+                isPrimary:
+                    type: boolean
+                    default: false
+                sortOrder:
+                    type: integer
+                    minimum: 0
+                    default: 0
+        ProductListQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                    description: 'Search query'
+                page:
+                    type: string
+                    pattern: ^\d+$
+                    description: '1-based page number'
+        ProductListResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            name:
+                                type: string
+                                minLength: 1
+                            price:
+                                type: integer
+                                minimum: 0
+                            stock:
+                                type: integer
+                                minimum: 0
+                            visibleMarket:
+                                type: boolean
+                                default: true
+                            id:
+                                type: string
+                            storeId:
+                                type: string
+                            imageUrl:
+                                type: string
+                            images:
+                                type: array
+                                items:
+                                    type: object
+                                    properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}
+                                    required: [fileName, fileUrl, id, productId, createdAt]
+                            store:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                required:
+                                    - id
+                                    - name
+                                    - slug
+                        required:
+                            - name
+                            - price
+                            - stock
+                            - id
+                            - storeId
+                            - imageUrl
+                meta:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
+                        page:
+                            type: integer
+                        pageSize:
+                            type: integer
+                    required:
+                        - total
+                        - page
+                        - pageSize
+            required:
+                - items
+                - meta
+        ProductResponse:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                price:
+                    type: integer
+                    minimum: 0
+                stock:
+                    type: integer
+                    minimum: 0
+                visibleMarket:
+                    type: boolean
+                    default: true
+                id:
+                    type: string
+                storeId:
+                    type: string
+                imageUrl:
+                    type: string
+                images:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            fileName:
+                                type: string
+                                minLength: 1
+                            fileUrl:
+                                type: string
+                                format: uri
+                            altText:
+                                type: string
+                            isPrimary:
+                                type: boolean
+                                default: false
+                            sortOrder:
+                                type: integer
+                                minimum: 0
+                                default: 0
+                            id:
+                                type: string
+                            productId:
+                                type: string
+                            createdAt:
+                                type: string
+                                format: date-time
+                        required:
+                            - fileName
+                            - fileUrl
+                            - id
+                            - productId
+                            - createdAt
+                store:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        name:
+                            type: string
+                        slug:
+                            type: string
+                    required:
+                        - id
+                        - name
+                        - slug
+            required:
+                - name
+                - price
+                - stock
+                - id
+                - storeId
+                - imageUrl
+        ProductSearchQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                category:
+                    type: string
+                storeId:
+                    type: string
+                page:
+                    type: string
+                    pattern: ^\d+$
+                limit:
+                    type: string
+                    pattern: ^\d+$
+        ProductUpdate:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                price:
+                    type: integer
+                    minimum: 0
+                stock:
+                    type: integer
+                    minimum: 0
+                visibleMarket:
+                    type: boolean
+                    default: true
+                images:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            fileName:
+                                type: string
+                                minLength: 1
+                            fileUrl:
+                                type: string
+                                format: uri
+                            altText:
+                                type: string
+                            isPrimary:
+                                type: boolean
+                                default: false
+                            sortOrder:
+                                type: integer
+                                minimum: 0
+                                default: 0
+                        required:
+                            - fileName
+                            - fileUrl
+        RefreshBody:
+            type: object
+            properties:
+                refreshToken:
+                    type: string
+            required:
+                - refreshToken
+        RegisterBody:
+            type: object
+            properties:
+                email:
+                    type: string
+                    format: email
+                password:
+                    type: string
+                    minLength: 8
+                role:
+                    type: string
+                    enum:
+                        - CUSTOMER
+                        - VENDOR
+                    default: CUSTOMER
+            required:
+                - email
+                - password
+        SlugParam:
+            type: object
+            properties:
+                slug:
+                    type: string
+                    description: 'Resource slug'
+            required:
+                - slug
+        StoreCreate:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                slug:
+                    type: string
+                    pattern: '^[a-z0-9-]+$'
+                logoUrl:
+                    type: string
+                    format: uri
+            required:
+                - name
+                - slug
+        StoreListQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                    description: 'Search query'
+                page:
+                    type: string
+                    pattern: ^\d+$
+                    description: '1-based page number'
+        StoreListResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            ownerId:
+                                type: string
+                            name:
+                                type: string
+                            slug:
+                                type: string
+                            logoUrl:
+                                type:
+                                    - string
+                                    - 'null'
+                            owner:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    email: {type: string}
+                                required:
+                                    - id
+                                    - email
+                        required:
+                            - id
+                            - ownerId
+                            - name
+                            - slug
+                            - logoUrl
+                meta:
+                    type: object
+                    properties:
+                        total:
+                            type: integer
+                        page:
+                            type: integer
+                        pageSize:
+                            type: integer
+                    required:
+                        - total
+                        - page
+                        - pageSize
+            required:
+                - items
+                - meta
+        StoreResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                ownerId:
+                    type: string
+                name:
+                    type: string
+                slug:
+                    type: string
+                logoUrl:
+                    type:
+                        - string
+                        - 'null'
+                owner:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        email:
+                            type: string
+                    required:
+                        - id
+                        - email
+            required:
+                - id
+                - ownerId
+                - name
+                - slug
+                - logoUrl
+        StoreSearchQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                page:
+                    type: string
+                    pattern: ^\d+$
+                limit:
+                    type: string
+                    pattern: ^\d+$
+        StoreSlugParam:
+            type: object
+            properties:
+                slug:
+                    type: string
+                    description: 'Resource slug'
+            required:
+                - slug
+        StoreUpdate:
+            type: object
+            properties:
+                name:
+                    type: string
+                    minLength: 1
+                slug:
+                    type: string
+                    pattern: '^[a-z0-9-]+$'
+                logoUrl:
+                    type: string
+                    format: uri
+        UserIdParam:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 'Resource ID'
+            required:
+                - id
+        UserResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                email:
+                    type: string
+                    format: email
+                role:
+                    type: string
+                    enum:
+                        - CUSTOMER
+                        - VENDOR
+                storeId:
+                    type:
+                        - string
+                        - 'null'
+            required:
+                - id
+                - email
+                - role
+                - storeId
+    parameters: {}
+paths:
+    /auth/register:
+        post:
+            tags:
+                - auth
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                password:
+                                    type: string
+                                    minLength: 8
+                                role:
+                                    type: string
+                                    enum: [CUSTOMER, VENDOR]
+                                    default: CUSTOMER
+                            required:
+                                - email
+                                - password
+            responses:
+                '201':
+                    description: 'User registered successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    accessToken: {type: string}
+                                    refreshToken: {type: string}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                required:
+                                    - accessToken
+                                    - refreshToken
+                                    - user
+                '409':
+                    description: 'Email already in use'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    accessToken: {type: string}
+                                    refreshToken: {type: string}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                required:
+                                    - accessToken
+                                    - refreshToken
+                                    - user
+    /auth/login:
+        post:
+            tags:
+                - auth
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                password:
+                                    type: string
+                                    minLength: 8
+                            required:
+                                - email
+                                - password
+            responses:
+                '201':
+                    description: 'User logged in successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    accessToken: {type: string}
+                                    refreshToken: {type: string}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                required:
+                                    - accessToken
+                                    - refreshToken
+                                    - user
+    /auth/refresh:
+        post:
+            tags:
+                - auth
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                refreshToken:
+                                    type: string
+                            required:
+                                - refreshToken
+            responses:
+                '200':
+                    description: 'Token refreshed successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    accessToken: {type: string}
+                                    refreshToken: {type: string}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                required:
+                                    - accessToken
+                                    - refreshToken
+                                    - user
+    /auth/users:
+        get:
+            tags:
+                - auth
+            responses:
+                '200':
+                    description: 'List of all users'
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    type: object
+                                    properties: {id: {type: string}, email: {type: string}, role: {type: string}}
+    /auth/me:
+        get:
+            tags:
+                - auth
+            security:
+                -
+                    bearerAuth: []
+            responses:
+                '200':
+                    description: 'Current user profile retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    email: {type: string, format: email}
+                                    role: {type: string, enum: [CUSTOMER, VENDOR]}
+                                    storeId: {type: [string, 'null']}
+                                required:
+                                    - id
+                                    - email
+                                    - role
+                                    - storeId
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'User not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /products:
+        get:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: category
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: storeId
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: limit
+                    in: query
+            responses:
+                '200':
+                    description: 'List of products'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {name: {type: string, minLength: 1}, price: {type: integer, minimum: 0}, stock: {type: integer, minimum: 0}, visibleMarket: {type: boolean, default: true}, id: {type: string}, storeId: {type: string}, imageUrl: {type: string}, images: {type: array, items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}, required: [fileName, fileUrl, id, productId, createdAt]}}, store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}, required: [id, name, slug]}}, required: [name, price, stock, id, storeId, imageUrl]}}
+                                    meta: {type: object, properties: {total: {type: integer}, page: {type: integer}, pageSize: {type: integer}}, required: [total, page, pageSize]}
+                                required:
+                                    - items
+                                    - meta
+        post:
+            tags:
+                - catalogue
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    minLength: 1
+                                price:
+                                    type: integer
+                                    minimum: 0
+                                stock:
+                                    type: integer
+                                    minimum: 0
+                                visibleMarket:
+                                    type: boolean
+                                    default: true
+                                images:
+                                    type: array
+                                    items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}}, required: [fileName, fileUrl]}
+                            required:
+                                - name
+                                - price
+                                - stock
+            responses:
+                '201':
+                    description: 'Product created successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name: {type: string, minLength: 1}
+                                    price: {type: integer, minimum: 0}
+                                    stock: {type: integer, minimum: 0}
+                                    visibleMarket: {type: boolean, default: true}
+                                    id: {type: string}
+                                    storeId: {type: string}
+                                    imageUrl: {type: string}
+                                    images: {type: array, items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}, required: [fileName, fileUrl, id, productId, createdAt]}}
+                                    store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}, required: [id, name, slug]}
+                                required:
+                                    - name
+                                    - price
+                                    - stock
+                                    - id
+                                    - storeId
+                                    - imageUrl
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required - you must own a store to create products'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/products/{id}':
+        get:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            responses:
+                '200':
+                    description: 'Product details'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name: {type: string, minLength: 1}
+                                    price: {type: integer, minimum: 0}
+                                    stock: {type: integer, minimum: 0}
+                                    visibleMarket: {type: boolean, default: true}
+                                    id: {type: string}
+                                    storeId: {type: string}
+                                    imageUrl: {type: string}
+                                    images: {type: array, items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}, required: [fileName, fileUrl, id, productId, createdAt]}}
+                                    store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}, required: [id, name, slug]}
+                                required:
+                                    - name
+                                    - price
+                                    - stock
+                                    - id
+                                    - storeId
+                                    - imageUrl
+                '404':
+                    description: 'Product not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        put:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    minLength: 1
+                                price:
+                                    type: integer
+                                    minimum: 0
+                                stock:
+                                    type: integer
+                                    minimum: 0
+                                visibleMarket:
+                                    type: boolean
+                                    default: true
+                                images:
+                                    type: array
+                                    items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}}, required: [fileName, fileUrl]}
+            responses:
+                '200':
+                    description: 'Product updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    name: {type: string, minLength: 1}
+                                    price: {type: integer, minimum: 0}
+                                    stock: {type: integer, minimum: 0}
+                                    visibleMarket: {type: boolean, default: true}
+                                    id: {type: string}
+                                    storeId: {type: string}
+                                    imageUrl: {type: string}
+                                    images: {type: array, items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}, required: [fileName, fileUrl, id, productId, createdAt]}}
+                                    store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}, required: [id, name, slug]}
+                                required:
+                                    - name
+                                    - price
+                                    - stock
+                                    - id
+                                    - storeId
+                                    - imageUrl
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Access denied - you do not own this product'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        delete:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            responses:
+                '204':
+                    description: 'Product deleted successfully'
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Access denied - you do not own this product'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /stores:
+        get:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: limit
+                    in: query
+            responses:
+                '200':
+                    description: 'List of stores'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, ownerId: {type: string}, name: {type: string}, slug: {type: string}, logoUrl: {type: [string, 'null']}, owner: {type: object, properties: {id: {type: string}, email: {type: string}}, required: [id, email]}}, required: [id, ownerId, name, slug, logoUrl]}}
+                                    meta: {type: object, properties: {total: {type: integer}, page: {type: integer}, pageSize: {type: integer}}, required: [total, page, pageSize]}
+                                required:
+                                    - items
+                                    - meta
+        post:
+            tags:
+                - catalogue
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    minLength: 1
+                                slug:
+                                    type: string
+                                    pattern: '^[a-z0-9-]+$'
+                                logoUrl:
+                                    type: string
+                                    format: uri
+                            required:
+                                - name
+                                - slug
+            responses:
+                '201':
+                    description: 'Store created successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    ownerId: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                    logoUrl: {type: [string, 'null']}
+                                    owner: {type: object, properties: {id: {type: string}, email: {type: string}}, required: [id, email]}
+                                required:
+                                    - id
+                                    - ownerId
+                                    - name
+                                    - slug
+                                    - logoUrl
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '409':
+                    description: 'You already own a store or store slug already exists'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/stores/{slug}':
+        get:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource slug'
+                    required: true
+                    description: 'Resource slug'
+                    name: slug
+                    in: path
+            responses:
+                '200':
+                    description: 'Store details'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    ownerId: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                    logoUrl: {type: [string, 'null']}
+                                    owner: {type: object, properties: {id: {type: string}, email: {type: string}}, required: [id, email]}
+                                required:
+                                    - id
+                                    - ownerId
+                                    - name
+                                    - slug
+                                    - logoUrl
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        put:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource slug'
+                    required: true
+                    description: 'Resource slug'
+                    name: slug
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                    minLength: 1
+                                slug:
+                                    type: string
+                                    pattern: '^[a-z0-9-]+$'
+                                logoUrl:
+                                    type: string
+                                    format: uri
+            responses:
+                '200':
+                    description: 'Store updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    ownerId: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                    logoUrl: {type: [string, 'null']}
+                                    owner: {type: object, properties: {id: {type: string}, email: {type: string}}, required: [id, email]}
+                                required:
+                                    - id
+                                    - ownerId
+                                    - name
+                                    - slug
+                                    - logoUrl
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Access denied - you do not own this store'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Store not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '409':
+                    description: 'Store slug already exists'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        delete:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource slug'
+                    required: true
+                    description: 'Resource slug'
+                    name: slug
+                    in: path
+            responses:
+                '204':
+                    description: 'Store deleted successfully'
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Access denied - you do not own this store'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Store not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/stores/{slug}/products':
+        get:
+            tags:
+                - catalogue
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource slug'
+                    required: true
+                    description: 'Resource slug'
+                    name: slug
+                    in: path
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: category
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: storeId
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                    required: false
+                    name: limit
+                    in: query
+            responses:
+                '200':
+                    description: 'Products from a specific store'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {name: {type: string, minLength: 1}, price: {type: integer, minimum: 0}, stock: {type: integer, minimum: 0}, visibleMarket: {type: boolean, default: true}, id: {type: string}, storeId: {type: string}, imageUrl: {type: string}, images: {type: array, items: {type: object, properties: {fileName: {type: string, minLength: 1}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean, default: false}, sortOrder: {type: integer, minimum: 0, default: 0}, id: {type: string}, productId: {type: string}, createdAt: {type: string, format: date-time}}, required: [fileName, fileUrl, id, productId, createdAt]}}, store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}, required: [id, name, slug]}}, required: [name, price, stock, id, storeId, imageUrl]}}
+                                    meta: {type: object, properties: {total: {type: integer}, page: {type: integer}, pageSize: {type: integer}}, required: [total, page, pageSize]}
+                                required:
+                                    - items
+                                    - meta
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /vendor/dashboard:
+        get:
+            tags:
+                - vendor
+            responses:
+                '200':
+                    description: 'Vendor dashboard overview'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}, logoUrl: {type: string}}}
+                                    owner: {type: object, properties: {id: {type: string}, email: {type: string}, role: {type: string}}}
+                                    stats: {type: object, properties: {totalProducts: {type: number}, lowStockProducts: {type: number}, visibleProducts: {type: number}, hiddenProducts: {type: number}}}
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /vendor/products/stats:
+        get:
+            tags:
+                - vendor
+            responses:
+                '200':
+                    description: 'Vendor product statistics'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    totalProducts: {type: number}
+                                    visibleProducts: {type: number}
+                                    hiddenProducts: {type: number}
+                                    lowStockProducts: {type: number}
+                                    outOfStockProducts: {type: number}
+                                    totalValue: {type: number}
+                                    stockHealth: {type: object, properties: {healthy: {type: number}, lowStock: {type: number}, outOfStock: {type: number}}}
+    /vendor/store:
+        get:
+            tags:
+                - vendor
+            responses:
+                '200':
+                    description: 'Vendor store details'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                    logoUrl: {type: string}
+                                    owner: {type: object, properties: {id: {type: string}, email: {type: string}, role: {type: string}}}
+        put:
+            tags:
+                - vendor
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                slug:
+                                    type: string
+                                logoUrl:
+                                    type: string
+            responses:
+                '200':
+                    description: 'Store updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    name: {type: string}
+                                    slug: {type: string}
+                                    logoUrl: {type: string}
+                '400':
+                    description: 'Bad request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '409':
+                    description: 'Store slug already exists'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /vendor/products:
+        get:
+            tags:
+                - vendor
+            responses:
+                '200':
+                    description: 'Vendor products list with sales data'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, stock: {type: number}, imageUrl: {type: string}, visibleMarket: {type: boolean}, storeId: {type: string}, salesData: {type: object, properties: {totalSold: {type: number}, totalRevenue: {type: number}, averagePrice: {type: number}}}}}}
+                                    meta: {type: object, properties: {total: {type: number}, page: {type: number}, pageSize: {type: number}}}
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /vendor/products/best-sellers:
+        get:
+            tags:
+                - vendor
+            responses:
+                '200':
+                    description: 'Vendor best-selling products'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    period: {type: string}
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, stock: {type: number}, imageUrl: {type: string}, visibleMarket: {type: boolean}, salesData: {type: object, properties: {totalSold: {type: number}, totalRevenue: {type: number}, averagePrice: {type: number}}}}}}
+                                    meta: {type: object, properties: {total: {type: number}}}
+                '401':
+                    description: Unauthorized
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /analytics/best-sellers:
+        get:
+            tags:
+                - analytics
+            responses:
+                '200':
+                    description: 'Global best-selling products'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    period: {type: string}
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, stock: {type: number}, imageUrl: {type: string}, store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}}, salesData: {type: object, properties: {totalSold: {type: number}, totalRevenue: {type: number}, averagePrice: {type: number}}}}}}
+                                    meta: {type: object, properties: {total: {type: number}}}
+    '/analytics/stores/{slug}/best-sellers':
+        get:
+            tags:
+                - analytics
+            responses:
+                '200':
+                    description: 'Store-specific best-selling products'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}}
+                                    period: {type: string}
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, stock: {type: number}, imageUrl: {type: string}, salesData: {type: object, properties: {totalSold: {type: number}, totalRevenue: {type: number}, averagePrice: {type: number}}}}}}
+                                    meta: {type: object, properties: {total: {type: number}}}
+                '404':
+                    description: 'Store not found'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /analytics/featured:
+        get:
+            tags:
+                - analytics
+            responses:
+                '200':
+                    description: 'Featured products (best sellers from last 30 days)'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, stock: {type: number}, imageUrl: {type: string}, store: {type: object, properties: {id: {type: string}, name: {type: string}, slug: {type: string}}}, salesData: {type: object, properties: {totalSold: {type: number}, totalRevenue: {type: number}, averagePrice: {type: number}}}}}}
+                                    meta: {type: object, properties: {total: {type: number}, period: {type: string}}}
+    /upload/presigned-url:
+        post:
+            tags:
+                - upload
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                fileName:
+                                    type: string
+                                    minLength: 1
+                                    description: 'Original filename with extension'
+                                contentType:
+                                    type: string
+                                    pattern: ^image/
+                                    description: 'MIME type (must start with image/)'
+                                fileSize:
+                                    type: integer
+                                    maximum: 10485760
+                                    description: 'File size in bytes (max 10MB)'
+                            required:
+                                - fileName
+                                - contentType
+                                - fileSize
+            responses:
+                '200':
+                    description: 'Presigned URL generated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    uploadUrl: {type: string, format: uri, description: 'Presigned URL for uploading the file'}
+                                    fileUrl: {type: string, format: uri, description: 'Public URL where the file will be accessible'}
+                                    fileName: {type: string, description: 'Generated unique filename'}
+                                    expiresIn: {type: integer, description: 'URL expiration time in seconds'}
+                                required:
+                                    - uploadUrl
+                                    - fileUrl
+                                    - fileName
+                                    - expiresIn
+                '400':
+                    description: 'Invalid upload request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    error: {type: string}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /upload/delete:
+        delete:
+            tags:
+                - upload
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                fileName:
+                                    type: string
+                                    minLength: 1
+                                    description: 'Filename to delete'
+                            required:
+                                - fileName
+            responses:
+                '200':
+                    description: 'Image deleted successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '400':
+                    description: 'Invalid delete request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    error: {type: string}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/vendor/products/{productId}/images':
+        post:
+            tags:
+                - vendor
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    name: productId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Product ID'
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    fileName: {type: string, minLength: 1}
+                                    fileUrl: {type: string, format: uri}
+                                    altText: {type: string}
+                                    isPrimary: {type: boolean, default: false}
+                                    sortOrder: {type: integer, minimum: 0, default: 0}
+                                required:
+                                    - fileName
+                                    - fileUrl
+            responses:
+                '201':
+                    description: 'Images added successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    addedCount: {type: integer}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        get:
+            tags:
+                - vendor
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    name: productId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Product ID'
+            responses:
+                '200':
+                    description: 'Product images retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    type: object
+                                    properties: {id: {type: string}, productId: {type: string}, fileName: {type: string}, fileUrl: {type: string, format: uri}, altText: {type: string}, isPrimary: {type: boolean}, sortOrder: {type: integer}, createdAt: {type: string, format: date-time}}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/vendor/products/{productId}/images/{imageId}':
+        put:
+            tags:
+                - vendor
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    name: productId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Product ID'
+                -
+                    name: imageId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Image ID'
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                fileName:
+                                    type: string
+                                    minLength: 1
+                                fileUrl:
+                                    type: string
+                                    format: uri
+                                altText:
+                                    type: string
+                                isPrimary:
+                                    type: boolean
+                                sortOrder:
+                                    type: integer
+                                    minimum: 0
+            responses:
+                '200':
+                    description: 'Image updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    productId: {type: string}
+                                    fileName: {type: string}
+                                    fileUrl: {type: string, format: uri}
+                                    altText: {type: string}
+                                    isPrimary: {type: boolean}
+                                    sortOrder: {type: integer}
+                                    createdAt: {type: string, format: date-time}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product image not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+        delete:
+            tags:
+                - vendor
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    name: productId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Product ID'
+                -
+                    name: imageId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Image ID'
+            responses:
+                '204':
+                    description: 'Image deleted successfully'
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product image not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/vendor/products/{productId}/images/reorder':
+        put:
+            tags:
+                - vendor
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    name: productId
+                    in: path
+                    required: true
+                    schema:
+                        type: string
+                    description: 'Product ID'
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                imageIds:
+                                    type: array
+                                    items: {type: string}
+                                    minItems: 1
+                                    description: 'Array of image IDs in desired order'
+                            required:
+                                - imageIds
+            responses:
+                '200':
+                    description: 'Images reordered successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '400':
+                    description: 'Invalid request - some image IDs do not belong to this product'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '401':
+                    description: 'Authentication required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '403':
+                    description: 'Vendor role required'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                '404':
+                    description: 'Product not found or access denied'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+webhooks: {}

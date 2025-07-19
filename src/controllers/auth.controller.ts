@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
-import { RegisterBody, LoginBody, RefreshBody, AuthResponse } from '../schema';
+import { RegisterBody, LoginBody, RefreshBody, AuthResponse, MeResponse } from '../schema';
 import { signAccess, signRefresh, verifyToken } from '../utils/jwt';
 
 export async function register(req: Request, res: Response) {
@@ -14,7 +15,7 @@ export async function register(req: Request, res: Response) {
 
   const password = await bcrypt.hash(body.password, 10);
   const user = await prisma.user.create({
-    data: { email: body.email, password, role: 'CUSTOMER' },
+    data: { email: body.email, password, role: body.role },
   });
 
   const accessToken = signAccess(user);
@@ -55,4 +56,29 @@ export async function refresh(req: Request, res: Response) {
 export async function getAllUsers(req: Request, res: Response) {
   const users = await prisma.user.findMany();
   res.json(users);
+}
+
+export async function me(req: Request, res: Response) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  // Get fresh user data from database
+  const freshUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      storeId: true,
+    },
+  });
+
+  if (!freshUser) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const response: z.infer<typeof MeResponse> = freshUser;
+  res.json(response);
 }

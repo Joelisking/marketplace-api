@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,11 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.listProducts = listProducts;
-exports.countProducts = countProducts;
-const prisma_1 = require("../lib/prisma");
-function listProducts(params) {
+import { prisma } from '../lib/prisma';
+export function listProducts(params) {
     return __awaiter(this, void 0, void 0, function* () {
         const { q, category, storeId, page, limit } = params;
         const whereConditions = [];
@@ -28,7 +24,7 @@ function listProducts(params) {
             console.warn('Category filtering requested but not implemented');
         }
         whereConditions.push({ visibleMarket: true });
-        return prisma_1.prisma.product.findMany({
+        return prisma.product.findMany({
             where: {
                 AND: whereConditions,
             },
@@ -46,6 +42,6 @@ function listProducts(params) {
         });
     });
 }
-function countProducts(where) {
-    return prisma_1.prisma.product.count({ where });
+export function countProducts(where) {
+    return prisma.product.count({ where });
 }

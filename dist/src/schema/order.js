@@ -1,35 +1,32 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrderListQuery = exports.OrderIdParam = exports.OrderListResponse = exports.OrderResponse = exports.OrderItemResponse = exports.CheckoutBody = exports.CheckoutItem = void 0;
-const zod_1 = require("zod");
-const common_1 = require("./common");
-exports.CheckoutItem = zod_1.z.object({
-    productId: zod_1.z.cuid(),
-    quantity: zod_1.z.number().int().min(1),
+import { z } from 'zod';
+import { IDParam, PaginationQuery, PageMeta } from './common';
+export const CheckoutItem = z.object({
+    productId: z.cuid(),
+    quantity: z.number().int().min(1),
 });
-exports.CheckoutBody = zod_1.z.object({
-    items: zod_1.z.array(exports.CheckoutItem).min(1),
+export const CheckoutBody = z.object({
+    items: z.array(CheckoutItem).min(1),
 });
-exports.OrderItemResponse = zod_1.z.object({
-    id: zod_1.z.string(),
-    productId: zod_1.z.string(),
-    quantity: zod_1.z.number().int(),
-    price: zod_1.z.number().int(),
+export const OrderItemResponse = z.object({
+    id: z.string(),
+    productId: z.string(),
+    quantity: z.number().int(),
+    price: z.number().int(),
 });
-exports.OrderResponse = zod_1.z.object({
-    id: zod_1.z.string(),
-    customerId: zod_1.z.string(),
-    storeId: zod_1.z.string(),
-    status: zod_1.z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']),
-    paymentStatus: zod_1.z.enum(['UNPAID', 'PAID']),
-    total: zod_1.z.number().int(),
-    items: zod_1.z.array(exports.OrderItemResponse),
+export const OrderResponse = z.object({
+    id: z.string(),
+    customerId: z.string(),
+    storeId: z.string(),
+    status: z.enum(['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED']),
+    paymentStatus: z.enum(['UNPAID', 'PAID']),
+    total: z.number().int(),
+    items: z.array(OrderItemResponse),
 });
-exports.OrderListResponse = zod_1.z.object({
-    items: zod_1.z.array(exports.OrderResponse),
-    meta: common_1.PageMeta,
+export const OrderListResponse = z.object({
+    items: z.array(OrderResponse),
+    meta: PageMeta,
 });
-exports.OrderIdParam = common_1.IDParam;
-exports.OrderListQuery = common_1.PaginationQuery.extend({
-    storeId: zod_1.z.string().optional(),
+export const OrderIdParam = IDParam;
+export const OrderListQuery = PaginationQuery.extend({
+    storeId: z.string().optional(),
 });

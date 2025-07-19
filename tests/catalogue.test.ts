@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { app } from '../src/index';
+import { app } from './mocks/app';
 
 describe('Catalogue', () => {
   it('lists products', async () => {

@@ -2,10 +2,20 @@
 import '../src/zod-openapi-setup';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import YAML from 'yamljs';
 import { OpenApiGeneratorV31 } from '@asteasolutions/zod-to-openapi';
 import { registry } from '../src/lib/openapi';
 import * as Schemas from '../src/schema';
 import '../src/routes/auth.routes'; // Ensure auth OpenAPI registrations are included
+import '../src/routes/catalogue.routes'; // Ensure catalogue OpenAPI registrations are included
+import '../src/routes/vendor.routes'; // Ensure vendor OpenAPI registrations are included
+import '../src/routes/analytics.routes'; // Ensure analytics OpenAPI registrations are included
+import '../src/routes/upload.routes'; // Ensure upload OpenAPI registrations are included
+import '../src/routes/product-image.routes';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Register all Zod schemas automatically
 for (const [name, schema] of Object.entries(Schemas)) {
@@ -37,9 +47,16 @@ const doc = generator.generateDocument({
     { url: 'https://api.yourdomain.com', description: 'Production' },
   ],
   security: [{ bearerAuth: [] }],
-  tags: [{ name: 'auth', description: 'Authentication endpoints' }],
+  tags: [
+    { name: 'auth', description: 'Authentication endpoints' },
+    { name: 'catalogue', description: 'Product and store catalogue endpoints' },
+    { name: 'vendor', description: 'Vendor dashboard and management endpoints' },
+    { name: 'analytics', description: 'Analytics and best-selling products endpoints' },
+    { name: 'upload', description: 'Image upload endpoints' },
+  ],
 });
 
 const outPath = path.resolve(__dirname, '../openapi.yaml');
-fs.writeFileSync(outPath, JSON.stringify(doc, null, 2));
+const yaml = YAML.stringify(doc, 10);
+fs.writeFileSync(outPath, yaml);
 console.log(`✅ Generated OpenAPI spec at ${outPath}`);

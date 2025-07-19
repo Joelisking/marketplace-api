@@ -5,18 +5,22 @@ services:
     command: pnpm dev
     volumes:
       - ./:/usr/src/app
+      - /usr/src/app/node_modules
     working_dir: /usr/src/app
     ports:
       - '4000:4000'
+      - '5555:5555'
     depends_on:
       - postgres
       - minio
     environment:
       - DATABASE_URL=${DATABASE_URL}
-      - S3_ENDPOINT=${S3_ENDPOINT}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_KEY=${S3_SECRET_KEY}
-      - S3_BUCKET=${S3_BUCKET}
+      - S3_ENDPOINT=${S3_ENDPOINT:-http://localhost:9000}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY:-minio}
+      - S3_SECRET_KEY=${S3_SECRET_KEY:-minio123}
+      - S3_BUCKET=${S3_BUCKET:-marketplace-images}
+      - S3_REGION=${S3_REGION:-us-east-1}
+      - CDN_BASE_URL=${CDN_BASE_URL:-http://localhost:9000}
 
   postgres:
     image: postgres:16
@@ -24,6 +28,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: marketplace
+    ports:
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -35,8 +41,29 @@ services:
       MINIO_ROOT_PASSWORD: minio123
     ports:
       - '9000:9000'
+      - '9001:9001'
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    environment:
+      MC_HOST_minio: http://minio:9000
+    entrypoint: >
+      /bin/sh -c "
+      sleep 10;
+      /usr/bin/mc alias set minio http://minio:9000 minio minio123;
+      /usr/bin/mc mb minio/marketplace-images --ignore-existing;
+      /usr/bin/mc policy set public minio/marketplace-images;
+      echo 'Bucket marketplace-images created successfully';
+      "
 
 volumes:
   postgres_data:
