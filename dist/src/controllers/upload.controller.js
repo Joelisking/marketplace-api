@@ -7,14 +7,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { generateUploadUrl, deleteImage, } from '../services/upload.service';
+import { generateUploadUrl, deleteImage, UploadRequestSchema, DeleteRequestSchema, } from '../services/upload.service';
 /**
  * Generate a presigned URL for image upload
  */
 export function getUploadUrl(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const body = req.body;
+            const body = UploadRequestSchema.parse(req.body);
             const result = yield generateUploadUrl(body);
             res.json({
                 uploadUrl: result.uploadUrl,
@@ -44,7 +44,7 @@ export function getUploadUrl(req, res) {
 export function deleteUploadedImage(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const body = req.body;
+            const body = DeleteRequestSchema.parse(req.body);
             yield deleteImage(body);
             res.json({
                 message: 'Image deleted successfully',

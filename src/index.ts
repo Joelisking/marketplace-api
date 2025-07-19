@@ -12,6 +12,9 @@ import analyticsRoutes from './routes/analytics.routes';
 import uploadRoutes from './routes/upload.routes';
 import enhancedUploadRoutes from './routes/enhanced-upload.routes';
 import productImageRoutes from './routes/product-image.routes';
+import cartRoutes from './routes/cart.routes';
+import enhancedCartRoutes from './routes/enhanced-cart.routes';
+import orderRoutes from './routes/order.routes';
 import { ZodError } from 'zod';
 
 dotenv.config();
@@ -37,6 +40,9 @@ app.use('/analytics', analyticsRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/enhanced-upload', enhancedUploadRoutes);
 app.use('/vendor/products', productImageRoutes);
+app.use('/', cartRoutes);
+app.use('/', enhancedCartRoutes);
+app.use('/', orderRoutes);
 
 // Error handling middleware
 app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {

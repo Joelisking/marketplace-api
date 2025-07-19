@@ -4,6 +4,7 @@ import { IDParam } from './common';
 export const RegisterBody = z.object({
     email: z.email(),
     password: z.string().min(8),
+    role: z.enum(['CUSTOMER', 'VENDOR', 'ADMIN']).default('CUSTOMER'),
 });
 export const LoginBody = z.object({
     email: z.email(),
@@ -15,7 +16,7 @@ export const RefreshBody = z.object({
 export const UserResponse = z.object({
     id: z.string(),
     email: z.email(),
-    role: z.enum(['CUSTOMER', 'VENDOR']),
+    role: z.enum(['CUSTOMER', 'VENDOR', 'ADMIN']),
     storeId: z.string().nullable(),
 });
 export const AuthResponse = z.object({

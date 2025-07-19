@@ -13,6 +13,9 @@ import '../src/routes/vendor.routes'; // Ensure vendor OpenAPI registrations are
 import '../src/routes/analytics.routes'; // Ensure analytics OpenAPI registrations are included
 import '../src/routes/upload.routes'; // Ensure upload OpenAPI registrations are included
 import '../src/routes/product-image.routes';
+import '../src/routes/cart.routes'; // Ensure cart OpenAPI registrations are included
+import '../src/routes/enhanced-cart.routes'; // Ensure enhanced cart OpenAPI registrations are included
+import '../src/routes/order.routes'; // Ensure order OpenAPI registrations are included
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -53,6 +56,9 @@ const doc = generator.generateDocument({
     { name: 'vendor', description: 'Vendor dashboard and management endpoints' },
     { name: 'analytics', description: 'Analytics and best-selling products endpoints' },
     { name: 'upload', description: 'Image upload endpoints' },
+    { name: 'cart', description: 'Cart management endpoints' },
+    { name: 'Enhanced Cart', description: 'Enhanced cart with sync capabilities' },
+    { name: 'orders', description: 'Order management endpoints' },
   ],
 });
 

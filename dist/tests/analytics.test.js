@@ -117,18 +117,23 @@ describe('Analytics Endpoints', () => {
                     storeId: store1Id,
                     status: 'DELIVERED',
                     paymentStatus: 'PAID',
-                    total: 3000,
+                    subtotal: 4000,
+                    total: 4000,
+                    tax: 0,
+                    shipping: 0,
                     items: {
                         create: [
                             {
                                 productId: product1Id,
                                 quantity: 2,
                                 price: 1000,
+                                total: 2000,
                             },
                             {
                                 productId: product2Id,
                                 quantity: 1,
                                 price: 2000,
+                                total: 2000,
                             },
                         ],
                     },
@@ -140,13 +145,17 @@ describe('Analytics Endpoints', () => {
                     storeId: store1Id,
                     status: 'DELIVERED',
                     paymentStatus: 'PAID',
+                    subtotal: 1000,
                     total: 1000,
+                    tax: 0,
+                    shipping: 0,
                     items: {
                         create: [
                             {
                                 productId: product1Id,
                                 quantity: 1,
                                 price: 1000,
+                                total: 1000,
                             },
                         ],
                     },
@@ -159,13 +168,17 @@ describe('Analytics Endpoints', () => {
                     storeId: store2Id,
                     status: 'DELIVERED',
                     paymentStatus: 'PAID',
+                    subtotal: 1500,
                     total: 1500,
+                    tax: 0,
+                    shipping: 0,
                     items: {
                         create: [
                             {
                                 productId: product3Id,
                                 quantity: 1,
                                 price: 1500,
+                                total: 1500,
                             },
                         ],
                     },

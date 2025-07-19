@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from 'express';
 import dotenv from 'dotenv';
 import apiDocs from './openapi';
@@ -9,6 +10,11 @@ import catalogueRoutes from './routes/catalogue.routes';
 import vendorRoutes from './routes/vendor.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import uploadRoutes from './routes/upload.routes';
+import enhancedUploadRoutes from './routes/enhanced-upload.routes';
+import productImageRoutes from './routes/product-image.routes';
+import cartRoutes from './routes/cart.routes';
+import orderRoutes from './routes/order.routes';
+import { ZodError } from 'zod';
 dotenv.config();
 const app = express();
 app.use(helmet());
@@ -26,6 +32,23 @@ app.use('/', catalogueRoutes);
 app.use('/vendor', vendorRoutes);
 app.use('/analytics', analyticsRoutes);
 app.use('/upload', uploadRoutes);
+app.use('/enhanced-upload', enhancedUploadRoutes);
+app.use('/vendor/products', productImageRoutes);
+app.use('/', cartRoutes);
+app.use('/', orderRoutes);
+// Error handling middleware
+app.use((error, req, res, _next) => {
+    if (error instanceof ZodError) {
+        return res.status(400).json({
+            message: 'Validation error',
+            errors: error.issues,
+        });
+    }
+    console.error('Unhandled error:', error);
+    res.status(500).json({
+        message: 'Internal server error',
+    });
+});
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
     console.log(`🚀 Listening on http://localhost:${port}`);

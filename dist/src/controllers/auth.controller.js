@@ -20,7 +20,7 @@ export function register(req, res) {
             return res.status(409).json({ message: 'Email already in use' });
         const password = yield bcrypt.hash(body.password, 10);
         const user = yield prisma.user.create({
-            data: { email: body.email, password, role: 'CUSTOMER' },
+            data: { email: body.email, password, role: body.role },
         });
         const accessToken = signAccess(user);
         const refreshToken = signRefresh({ sub: user.id });

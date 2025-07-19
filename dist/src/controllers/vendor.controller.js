@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { prisma } from '../lib/prisma';
+import { StoreUpdate } from '../schema/store';
 export function getVendorDashboard(req, res) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
@@ -382,11 +383,7 @@ export function updateVendorStore(req, res) {
         if (!userId) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
-        const { name, slug, logoUrl } = req.body;
-        // Validate input
-        if (!name && !slug && !logoUrl) {
-            return res.status(400).json({ message: 'At least one field must be provided' });
-        }
+        const data = StoreUpdate.parse(req.body);
         // Get vendor's store
         const existingStore = yield prisma.store.findFirst({
             where: { owner: { id: userId } },
@@ -395,9 +392,9 @@ export function updateVendorStore(req, res) {
             return res.status(404).json({ message: 'Store not found' });
         }
         // If slug is being updated, check if it's available
-        if (slug && slug !== existingStore.slug) {
+        if (data.slug && data.slug !== existingStore.slug) {
             const slugExists = yield prisma.store.findUnique({
-                where: { slug },
+                where: { slug: data.slug },
             });
             if (slugExists) {
                 return res.status(409).json({ message: 'Store slug already exists' });
@@ -406,7 +403,7 @@ export function updateVendorStore(req, res) {
         // Update store
         const updatedStore = yield prisma.store.update({
             where: { id: existingStore.id },
-            data: Object.assign(Object.assign(Object.assign({}, (name && { name })), (slug && { slug })), (logoUrl && { logoUrl })),
+            data,
             include: {
                 owner: {
                     select: {

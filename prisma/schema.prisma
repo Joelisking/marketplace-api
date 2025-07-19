@@ -9,23 +9,54 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  email    String  @unique
-  password String
-  role     Role
-  storeId  String? @unique
-  orders   Order[]
-  store    Store?  @relation("VendorStore", fields: [storeId], references: [id])
+  id        String     @id @default(cuid())
+  email     String     @unique
+  password  String
+  role      Role
+  storeId   String?    @unique
+  createdAt DateTime   @default(now())
+  firstName String?
+  lastName  String?
+  phone     String?
+  updatedAt DateTime?
+  address   Address?
+  cartItems CartItem[]
+  orders    Order[]
+  store     Store?     @relation("VendorStore", fields: [storeId], references: [id])
+
+  @@index([email])
+  @@index([role])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String   @default("Nigeria")
+  isDefault  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Store {
-  id       String    @id @default(cuid())
-  name     String
-  slug     String    @unique
-  logoUrl  String?
-  orders   Order[]
-  products Product[]
-  owner    User?     @relation("VendorStore")
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  logoUrl     String?
+  createdAt   DateTime  @default(now())
+  description String?
+  isActive    Boolean   @default(true)
+  updatedAt   DateTime?
+  orders      Order[]
+  products    Product[]
+  owner       User?     @relation("VendorStore")
+
+  @@index([slug])
+  @@index([isActive])
 }
 
 model Product {
@@ -36,11 +67,22 @@ model Product {
   stock         Int
   imageUrl      String
   visibleMarket Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  description   String?
+  dimensions    Json?
+  isActive      Boolean        @default(true)
+  sku           String?
+  updatedAt     DateTime?
+  weight        Float?
+  cartItems     CartItem[]
   orderItems    OrderItem[]
   store         Store          @relation(fields: [storeId], references: [id])
   images        ProductImage[]
 
   @@index([storeId, name])
+  @@index([storeId, isActive])
+  @@index([sku])
+  @@index([visibleMarket, isActive])
 }
 
 model ProductImage {
@@ -58,18 +100,57 @@ model ProductImage {
   @@index([productId, sortOrder])
 }
 
+model CartItem {
+  id        String    @id @default(cuid())
+  userId    String
+  productId String
+  quantity  Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+}
+
 model Order {
-  id            String        @id @default(cuid())
-  customerId    String
-  storeId       String
-  status        OrderStatus
-  paymentStatus PaymentStatus
-  total         Int
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  customer      User          @relation(fields: [customerId], references: [id])
-  store         Store         @relation(fields: [storeId], references: [id])
-  items         OrderItem[]
+  id                String        @id @default(cuid())
+  customerId        String
+  storeId           String
+  status            OrderStatus
+  paymentStatus     PaymentStatus
+  total             Int
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime?
+  billingAddress    Json?
+  cancelReason      String?
+  cancelledAt       DateTime?
+  currency          String        @default("NGN")
+  deliveredAt       DateTime?
+  discount          Int           @default(0)
+  estimatedDelivery DateTime?
+  notes             String?
+  paymentData       Json?
+  paymentProvider   String?
+  paymentReference  String?
+  shipping          Int           @default(0)
+  shippingAddress   Json?
+  subtotal          Int
+  tax               Int           @default(0)
+  customer          User          @relation(fields: [customerId], references: [id])
+  store             Store         @relation(fields: [storeId], references: [id])
+  orderEvents       OrderEvent[]
+  items             OrderItem[]
+  payments          Payment[]
+
+  @@index([customerId, createdAt])
+  @@index([storeId, createdAt])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([paymentReference])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -78,18 +159,76 @@ model OrderItem {
   productId String
   quantity  Int
   price     Int
-  order     Order   @relation(fields: [orderId], references: [id])
+  total     Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  orderId      String
+  amount       Int
+  currency     String        @default("NGN")
+  provider     String
+  reference    String
+  status       PaymentStatus
+  providerData Json?
+  metadata     Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime?
+  order        Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderEvent {
+  id          String         @id @default(cuid())
+  orderId     String
+  eventType   OrderEventType
+  description String
+  metadata    Json?
+  createdAt   DateTime       @default(now())
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId, createdAt])
+  @@index([eventType])
+}
+
+model InventoryLog {
+  id            String           @id @default(cuid())
+  productId     String
+  type          InventoryLogType
+  quantity      Int
+  previousStock Int
+  newStock      Int
+  reason        String?
+  reference     String?
+  metadata      Json?
+  createdAt     DateTime         @default(now())
+
+  @@index([productId, createdAt])
+  @@index([type])
 }
 
 enum Role {
   CUSTOMER
   VENDOR
+  ADMIN
 }
 
 enum PaymentStatus {
   UNPAID
   PAID
+  PENDING
+  FAILED
+  REFUNDED
+  CANCELLED
 }
 
 enum OrderStatus {
@@ -97,4 +236,27 @@ enum OrderStatus {
   PROCESSING
   SHIPPED
   DELIVERED
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum OrderEventType {
+  ORDER_CREATED
+  PAYMENT_RECEIVED
+  ORDER_CONFIRMED
+  ORDER_PROCESSING
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ORDER_CANCELLED
+  PAYMENT_FAILED
+  PAYMENT_REFUNDED
+}
+
+enum InventoryLogType {
+  STOCK_IN
+  STOCK_OUT
+  ADJUSTMENT
+  RESERVED
+  RELEASED
 }

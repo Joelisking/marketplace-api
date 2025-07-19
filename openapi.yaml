@@ -29,6 +29,15 @@ tags:
     -
         name: upload
         description: 'Image upload endpoints'
+    -
+        name: cart
+        description: 'Cart management endpoints'
+    -
+        name: 'Enhanced Cart'
+        description: 'Enhanced cart with sync capabilities'
+    -
+        name: orders
+        description: 'Order management endpoints'
 components:
     securitySchemes:
         bearerAuth:
@@ -37,6 +46,19 @@ components:
             bearerFormat: JWT
             description: 'Paste an **access token** here.'
     schemas:
+        AddToCartBody:
+            type: object
+            properties:
+                productId:
+                    type: string
+                    minLength: 1
+                quantity:
+                    type: integer
+                    exclusiveMinimum: 0
+                    maximum: 100
+            required:
+                - productId
+                - quantity
         AuthResponse:
             type: object
             properties:
@@ -57,6 +79,7 @@ components:
                             enum:
                                 - CUSTOMER
                                 - VENDOR
+                                - ADMIN
                         storeId:
                             type:
                                 - string
@@ -70,6 +93,112 @@ components:
                 - accessToken
                 - refreshToken
                 - user
+        CartItemIdParam:
+            type: object
+            properties:
+                id:
+                    type: string
+                    description: 'Resource ID'
+            required:
+                - id
+        CartItemResponse:
+            type: object
+            properties:
+                id:
+                    type: string
+                productId:
+                    type: string
+                quantity:
+                    type: number
+                createdAt:
+                    type: string
+                    format: date
+                updatedAt:
+                    type:
+                        - string
+                        - 'null'
+                    format: date
+                product:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        name:
+                            type: string
+                        price:
+                            type: number
+                        imageUrl:
+                            type: string
+                    required:
+                        - id
+                        - name
+                        - price
+                        - imageUrl
+            required:
+                - id
+                - productId
+                - quantity
+                - createdAt
+                - updatedAt
+                - product
+        CartSummaryResponse:
+            type: object
+            properties:
+                items:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                            id:
+                                type: string
+                            productId:
+                                type: string
+                            quantity:
+                                type: number
+                            createdAt:
+                                type: string
+                                format: date
+                            updatedAt:
+                                type:
+                                    - string
+                                    - 'null'
+                                format: date
+                            product:
+                                type: object
+                                properties:
+                                    id: {type: string}
+                                    name: {type: string}
+                                    price: {type: number}
+                                    imageUrl: {type: string}
+                                required:
+                                    - id
+                                    - name
+                                    - price
+                                    - imageUrl
+                        required:
+                            - id
+                            - productId
+                            - quantity
+                            - createdAt
+                            - updatedAt
+                            - product
+                totalItems:
+                    type: number
+                subtotal:
+                    type: number
+                estimatedTax:
+                    type: number
+                estimatedShipping:
+                    type: number
+                total:
+                    type: number
+            required:
+                - items
+                - totalItems
+                - subtotal
+                - estimatedTax
+                - estimatedShipping
+                - total
         CheckoutBody:
             type: object
             properties:
@@ -135,6 +264,7 @@ components:
                     enum:
                         - CUSTOMER
                         - VENDOR
+                        - ADMIN
                 storeId:
                     type:
                         - string
@@ -180,6 +310,20 @@ components:
                     description: '1-based page number'
                 storeId:
                     type: string
+                status:
+                    type: string
+                    enum:
+                        - PENDING
+                        - PROCESSING
+                        - SHIPPED
+                        - DELIVERED
+                        - CONFIRMED
+                        - CANCELLED
+                        - REFUNDED
+                startDate:
+                    type: string
+                endDate:
+                    type: string
         OrderListResponse:
             type: object
             properties:
@@ -201,19 +345,44 @@ components:
                                     - PROCESSING
                                     - SHIPPED
                                     - DELIVERED
+                                    - CONFIRMED
+                                    - CANCELLED
+                                    - REFUNDED
                             paymentStatus:
                                 type: string
                                 enum:
                                     - UNPAID
                                     - PAID
+                                    - PENDING
+                                    - FAILED
+                                    - REFUNDED
+                                    - CANCELLED
                             total:
                                 type: integer
+                            subtotal:
+                                type: integer
+                            tax:
+                                type: integer
+                            shipping:
+                                type: integer
+                            discount:
+                                type: integer
+                            currency:
+                                type: string
                             items:
                                 type: array
                                 items:
                                     type: object
                                     properties: {id: {type: string}, productId: {type: string}, quantity: {type: integer}, price: {type: integer}}
                                     required: [id, productId, quantity, price]
+                            createdAt:
+                                type: string
+                                format: date
+                            updatedAt:
+                                type:
+                                    - string
+                                    - 'null'
+                                format: date
                         required:
                             - id
                             - customerId
@@ -221,7 +390,14 @@ components:
                             - status
                             - paymentStatus
                             - total
+                            - subtotal
+                            - tax
+                            - shipping
+                            - discount
+                            - currency
                             - items
+                            - createdAt
+                            - updatedAt
                 meta:
                     type: object
                     properties:
@@ -254,13 +430,30 @@ components:
                         - PROCESSING
                         - SHIPPED
                         - DELIVERED
+                        - CONFIRMED
+                        - CANCELLED
+                        - REFUNDED
                 paymentStatus:
                     type: string
                     enum:
                         - UNPAID
                         - PAID
+                        - PENDING
+                        - FAILED
+                        - REFUNDED
+                        - CANCELLED
                 total:
                     type: integer
+                subtotal:
+                    type: integer
+                tax:
+                    type: integer
+                shipping:
+                    type: integer
+                discount:
+                    type: integer
+                currency:
+                    type: string
                 items:
                     type: array
                     items:
@@ -279,6 +472,14 @@ components:
                             - productId
                             - quantity
                             - price
+                createdAt:
+                    type: string
+                    format: date
+                updatedAt:
+                    type:
+                        - string
+                        - 'null'
+                    format: date
             required:
                 - id
                 - customerId
@@ -286,7 +487,22 @@ components:
                 - status
                 - paymentStatus
                 - total
+                - subtotal
+                - tax
+                - shipping
+                - discount
+                - currency
                 - items
+                - createdAt
+                - updatedAt
+        OrderStatsQuery:
+            type: object
+            properties:
+                days:
+                    type: integer
+                    minimum: 1
+                    maximum: 365
+                    default: 30
         PageMeta:
             type: object
             properties:
@@ -713,6 +929,7 @@ components:
                     enum:
                         - CUSTOMER
                         - VENDOR
+                        - ADMIN
                     default: CUSTOMER
             required:
                 - email
@@ -862,6 +1079,32 @@ components:
                 logoUrl:
                     type: string
                     format: uri
+        UpdateCartItemBody:
+            type: object
+            properties:
+                quantity:
+                    type: integer
+                    exclusiveMinimum: 0
+                    maximum: 100
+            required:
+                - quantity
+        UpdateOrderStatusBody:
+            type: object
+            properties:
+                status:
+                    type: string
+                    enum:
+                        - PENDING
+                        - PROCESSING
+                        - SHIPPED
+                        - DELIVERED
+                        - CONFIRMED
+                        - CANCELLED
+                        - REFUNDED
+                reason:
+                    type: string
+            required:
+                - status
         UserIdParam:
             type: object
             properties:
@@ -883,6 +1126,7 @@ components:
                     enum:
                         - CUSTOMER
                         - VENDOR
+                        - ADMIN
                 storeId:
                     type:
                         - string
@@ -912,7 +1156,7 @@ paths:
                                     minLength: 8
                                 role:
                                     type: string
-                                    enum: [CUSTOMER, VENDOR]
+                                    enum: [CUSTOMER, VENDOR, ADMIN]
                                     default: CUSTOMER
                             required:
                                 - email
@@ -927,7 +1171,7 @@ paths:
                                 properties:
                                     accessToken: {type: string}
                                     refreshToken: {type: string}
-                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR, ADMIN]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
                                 required:
                                     - accessToken
                                     - refreshToken
@@ -941,7 +1185,7 @@ paths:
                                 properties:
                                     accessToken: {type: string}
                                     refreshToken: {type: string}
-                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR, ADMIN]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
                                 required:
                                     - accessToken
                                     - refreshToken
@@ -975,7 +1219,7 @@ paths:
                                 properties:
                                     accessToken: {type: string}
                                     refreshToken: {type: string}
-                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR, ADMIN]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
                                 required:
                                     - accessToken
                                     - refreshToken
@@ -1004,7 +1248,7 @@ paths:
                                 properties:
                                     accessToken: {type: string}
                                     refreshToken: {type: string}
-                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
+                                    user: {type: object, properties: {id: {type: string}, email: {type: string, format: email}, role: {type: string, enum: [CUSTOMER, VENDOR, ADMIN]}, storeId: {type: [string, 'null']}}, required: [id, email, role, storeId]}
                                 required:
                                     - accessToken
                                     - refreshToken
@@ -1040,7 +1284,7 @@ paths:
                                 properties:
                                     id: {type: string}
                                     email: {type: string, format: email}
-                                    role: {type: string, enum: [CUSTOMER, VENDOR]}
+                                    role: {type: string, enum: [CUSTOMER, VENDOR, ADMIN]}
                                     storeId: {type: [string, 'null']}
                                 required:
                                     - id
@@ -2317,4 +2561,644 @@ paths:
                                 type: object
                                 properties:
                                     message: {type: string}
+    /cart/items:
+        post:
+            tags:
+                - cart
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                productId:
+                                    type: string
+                                    minLength: 1
+                                quantity:
+                                    type: integer
+                                    exclusiveMinimum: 0
+                                    maximum: 100
+                            required:
+                                - productId
+                                - quantity
+            responses:
+                '200':
+                    description: 'Item added to cart successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    item: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}
+                                required:
+                                    - message
+                                    - item
+    '/cart/items/{productId}':
+        put:
+            tags:
+                - cart
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                quantity:
+                                    type: integer
+                                    exclusiveMinimum: 0
+                                    maximum: 100
+                            required:
+                                - quantity
+            responses:
+                '200':
+                    description: 'Cart item updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    item: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}
+                                required:
+                                    - message
+                                    - item
+        delete:
+            tags:
+                - cart
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            responses:
+                '200':
+                    description: 'Item removed from cart successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                required:
+                                    - message
+    /cart:
+        get:
+            tags:
+                - cart
+            security:
+                -
+                    bearerAuth: []
+            responses:
+                '200':
+                    description: 'Cart retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}
+                                    totalItems: {type: number}
+                                    subtotal: {type: number}
+                                    estimatedTax: {type: number}
+                                    estimatedShipping: {type: number}
+                                    total: {type: number}
+                                required:
+                                    - items
+                                    - totalItems
+                                    - subtotal
+                                    - estimatedTax
+                                    - estimatedShipping
+                                    - total
+        delete:
+            tags:
+                - cart
+            security:
+                -
+                    bearerAuth: []
+            responses:
+                '200':
+                    description: 'Cart cleared successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                required:
+                                    - message
+    /enhanced-cart:
+        get:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: syncData
+                    in: query
+            responses:
+                '200':
+                    description: 'Enhanced cart retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cart: {type: object, properties: {items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}, totalItems: {type: number}, subtotal: {type: number}, estimatedTax: {type: number}, estimatedShipping: {type: number}, total: {type: number}}, required: [items, totalItems, subtotal, estimatedTax, estimatedShipping, total]}
+                                    needsSync: {type: boolean}
+                                    localItemCount: {type: number}
+                                    syncData: {type: object, properties: {localItems: {type: array, items: {type: object, properties: {productId: {type: string}, quantity: {type: number}, addedAt: {type: number}}, required: [productId, quantity, addedAt]}}, lastSync: {type: number}, userId: {type: string}}, required: [localItems, lastSync]}
+                                required:
+                                    - cart
+                                    - needsSync
+                                    - localItemCount
+    /enhanced-cart/items:
+        post:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                productId:
+                                    type: string
+                                quantity:
+                                    type: integer
+                                    exclusiveMinimum: 0
+                                    maximum: 100
+                            required:
+                                - productId
+                                - quantity
+            responses:
+                '200':
+                    description: 'Item added to enhanced cart successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cart: {type: object, properties: {items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}, totalItems: {type: number}, subtotal: {type: number}, estimatedTax: {type: number}, estimatedShipping: {type: number}, total: {type: number}}, required: [items, totalItems, subtotal, estimatedTax, estimatedShipping, total]}
+                                    needsSync: {type: boolean}
+                                    localItemCount: {type: number}
+                                    syncData: {type: object, properties: {localItems: {type: array, items: {type: object, properties: {productId: {type: string}, quantity: {type: number}, addedAt: {type: number}}, required: [productId, quantity, addedAt]}}, lastSync: {type: number}, userId: {type: string}}, required: [localItems, lastSync]}
+                                required:
+                                    - cart
+                                    - needsSync
+                                    - localItemCount
+    '/enhanced-cart/items/{productId}':
+        put:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                    required: true
+                    name: productId
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                quantity:
+                                    type: integer
+                                    exclusiveMinimum: 0
+                                    maximum: 100
+                            required:
+                                - quantity
+            responses:
+                '200':
+                    description: 'Enhanced cart item updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cart: {type: object, properties: {items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}, totalItems: {type: number}, subtotal: {type: number}, estimatedTax: {type: number}, estimatedShipping: {type: number}, total: {type: number}}, required: [items, totalItems, subtotal, estimatedTax, estimatedShipping, total]}
+                                    needsSync: {type: boolean}
+                                    localItemCount: {type: number}
+                                    syncData: {type: object, properties: {localItems: {type: array, items: {type: object, properties: {productId: {type: string}, quantity: {type: number}, addedAt: {type: number}}, required: [productId, quantity, addedAt]}}, lastSync: {type: number}, userId: {type: string}}, required: [localItems, lastSync]}
+                                required:
+                                    - cart
+                                    - needsSync
+                                    - localItemCount
+        delete:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                    required: true
+                    name: productId
+                    in: path
+            responses:
+                '200':
+                    description: 'Item removed from enhanced cart successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cart: {type: object, properties: {items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}, totalItems: {type: number}, subtotal: {type: number}, estimatedTax: {type: number}, estimatedShipping: {type: number}, total: {type: number}}, required: [items, totalItems, subtotal, estimatedTax, estimatedShipping, total]}
+                                    needsSync: {type: boolean}
+                                    localItemCount: {type: number}
+                                    syncData: {type: object, properties: {localItems: {type: array, items: {type: object, properties: {productId: {type: string}, quantity: {type: number}, addedAt: {type: number}}, required: [productId, quantity, addedAt]}}, lastSync: {type: number}, userId: {type: string}}, required: [localItems, lastSync]}
+                                required:
+                                    - cart
+                                    - needsSync
+                                    - localItemCount
+    /enhanced-cart/sync:
+        post:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                localItems:
+                                    type: array
+                                    items: {type: object, properties: {productId: {type: string}, quantity: {type: number}}, required: [productId, quantity]}
+                            required:
+                                - localItems
+            responses:
+                '200':
+                    description: 'Local cart synced successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    cart: {type: object, properties: {items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, createdAt: {type: string, format: date}, updatedAt: {type: [string, 'null'], format: date}, product: {type: object, properties: {id: {type: string}, name: {type: string}, price: {type: number}, imageUrl: {type: string}}, required: [id, name, price, imageUrl]}}, required: [id, productId, quantity, createdAt, updatedAt, product]}}, totalItems: {type: number}, subtotal: {type: number}, estimatedTax: {type: number}, estimatedShipping: {type: number}, total: {type: number}}, required: [items, totalItems, subtotal, estimatedTax, estimatedShipping, total]}
+                                    needsSync: {type: boolean}
+                                    localItemCount: {type: number}
+                                    syncData: {type: object, properties: {localItems: {type: array, items: {type: object, properties: {productId: {type: string}, quantity: {type: number}, addedAt: {type: number}}, required: [productId, quantity, addedAt]}}, lastSync: {type: number}, userId: {type: string}}, required: [localItems, lastSync]}
+                                required:
+                                    - cart
+                                    - needsSync
+                                    - localItemCount
+    /enhanced-cart/stats:
+        get:
+            tags:
+                - 'Enhanced Cart'
+            security:
+                -
+                    bearerAuth: []
+            responses:
+                '200':
+                    description: 'Enhanced cart statistics retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    totalItems: {type: number}
+                                    uniqueProducts: {type: number}
+                                    estimatedTotal: {type: number}
+                                    lastUpdated: {type: string, format: date}
+                                required:
+                                    - totalItems
+                                    - uniqueProducts
+                                    - estimatedTotal
+                                    - lastUpdated
+    /orders:
+        post:
+            tags:
+                - orders
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                storeId:
+                                    type: string
+                                shippingAddress:
+                                    type: object
+                                    properties: {street: {type: string}, city: {type: string}, state: {type: string}, postalCode: {type: string}, country: {type: string}}
+                                    required: [street, city, state, postalCode]
+                                billingAddress:
+                                    type: object
+                                    properties: {street: {type: string}, city: {type: string}, state: {type: string}, postalCode: {type: string}, country: {type: string}}
+                                notes:
+                                    type: string
+                            required:
+                                - storeId
+                                - shippingAddress
+            responses:
+                '200':
+                    description: 'Order created successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}}}}}}
+        get:
+            tags:
+                - orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Search query'
+                    required: false
+                    description: 'Search query'
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                        description: '1-based page number'
+                    required: false
+                    description: '1-based page number'
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: storeId
+                    in: query
+                -
+                    schema:
+                        type: string
+                        enum:
+                            - PENDING
+                            - PROCESSING
+                            - SHIPPED
+                            - DELIVERED
+                            - CONFIRMED
+                            - CANCELLED
+                            - REFUNDED
+                    required: false
+                    name: status
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: startDate
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: endDate
+                    in: query
+            responses:
+                '200':
+                    description: 'Orders retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    orders: {type: array, items: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, createdAt: {type: string}}}}
+                                    pagination: {type: object, properties: {page: {type: number}, limit: {type: number}, total: {type: number}, totalPages: {type: number}}}
+    '/orders/{orderId}':
+        get:
+            tags:
+                - orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            responses:
+                '200':
+                    description: 'Order details retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, subtotal: {type: number}, tax: {type: number}, shipping: {type: number}, currency: {type: string}, createdAt: {type: string}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}, product: {type: object, properties: {id: {type: string}, name: {type: string}, imageUrl: {type: string}}}}}}}}
+        delete:
+            tags:
+                - orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                reason:
+                                    type: string
+            responses:
+                '200':
+                    description: 'Order cancelled successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, cancelledAt: {type: string}}}
+    '/vendor/orders/{orderId}/status':
+        patch:
+            tags:
+                - vendor-orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Resource ID'
+                    required: true
+                    description: 'Resource ID'
+                    name: id
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                status:
+                                    type: string
+                                reason:
+                                    type: string
+                            required:
+                                - status
+            responses:
+                '200':
+                    description: 'Order status updated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, updatedAt: {type: string}}}
+    /vendor/orders:
+        get:
+            tags:
+                - vendor-orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Search query'
+                    required: false
+                    description: 'Search query'
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                        description: '1-based page number'
+                    required: false
+                    description: '1-based page number'
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: storeId
+                    in: query
+                -
+                    schema:
+                        type: string
+                        enum:
+                            - PENDING
+                            - PROCESSING
+                            - SHIPPED
+                            - DELIVERED
+                            - CONFIRMED
+                            - CANCELLED
+                            - REFUNDED
+                    required: false
+                    name: status
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: startDate
+                    in: query
+                -
+                    schema:
+                        type: string
+                    required: false
+                    name: endDate
+                    in: query
+            responses:
+                '200':
+                    description: 'Vendor orders retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    orders: {type: array, items: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, customer: {type: object, properties: {id: {type: string}, email: {type: string}, firstName: {type: string}, lastName: {type: string}}}, createdAt: {type: string}}}}
+                                    pagination: {type: object, properties: {page: {type: number}, limit: {type: number}, total: {type: number}, totalPages: {type: number}}}
+    /vendor/orders/stats:
+        get:
+            tags:
+                - vendor-orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: integer
+                        minimum: 1
+                        maximum: 365
+                        default: 30
+                    required: false
+                    name: days
+                    in: query
+            responses:
+                '200':
+                    description: 'Vendor order statistics retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    period: {type: string}
+                                    totalOrders: {type: number}
+                                    totalRevenue: {type: number}
+                                    byStatus: {type: array, items: {type: object, properties: {status: {type: string}, count: {type: number}, revenue: {type: number}}}}
 webhooks: {}

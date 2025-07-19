@@ -13,13 +13,18 @@ RUN pnpm install
 
 # Copy the rest of the app
 COPY . .
+
+# Install PostgreSQL client for health checks
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
+# Generate Prisma client with updated schema
 RUN pnpm prisma generate
 
-# Build TypeScript
+# Build TypeScript with updated configuration
 RUN pnpm build
 
 # Expose the port your app runs on
 EXPOSE 4000
 
-# Start the app
-CMD ["pnpm", "dev"]
+# Use the entrypoint script
+ENTRYPOINT ["./docker-entrypoint.sh"]

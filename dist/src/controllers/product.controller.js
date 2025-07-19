@@ -7,6 +7,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 import { ProductIdParam, ProductSearchQuery, ProductCreate, ProductUpdate, } from '../schema';
 import { listProducts, countProducts } from '../services/product.service';
 import { prisma } from '../lib/prisma';
@@ -57,6 +68,9 @@ export function getProductById(req, res) {
                         slug: true,
                     },
                 },
+                images: {
+                    orderBy: { sortOrder: 'asc' },
+                },
             },
         });
         if (!product)
@@ -82,18 +96,62 @@ export function createProduct(req, res) {
                 .status(403)
                 .json({ message: 'Vendor role required - you must own a store to create products' });
         }
-        const product = yield prisma.product.create({
-            data: Object.assign(Object.assign({}, data), { storeId: store.id }),
-            include: {
-                store: {
-                    select: {
-                        id: true,
-                        name: true,
-                        slug: true,
+        // Extract images data from request
+        const { images } = data, productData = __rest(data, ["images"]);
+        // Create product with transaction to handle images
+        const product = yield prisma.$transaction((tx) => __awaiter(this, void 0, void 0, function* () {
+            // Create the product with placeholder imageUrl (will be updated if images are provided)
+            const newProduct = yield tx.product.create({
+                data: Object.assign(Object.assign({}, productData), { storeId: store.id, imageUrl: 'https://via.placeholder.com/400x400?text=No+Image' }),
+                include: {
+                    store: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                        },
                     },
                 },
-            },
-        });
+            });
+            // If images are provided, create them
+            if (images && images.length > 0) {
+                // Check if any image should be primary
+                const hasPrimary = images.some((img) => img.isPrimary);
+                // If no primary specified, make the first one primary
+                if (!hasPrimary && images.length > 0) {
+                    images[0].isPrimary = true;
+                }
+                // Create images
+                const imageData = images.map((img, index) => (Object.assign(Object.assign({}, img), { productId: newProduct.id, sortOrder: index })));
+                yield tx.productImage.createMany({
+                    data: imageData,
+                });
+                // Update product's primary imageUrl for backward compatibility
+                const primaryImage = images.find((img) => img.isPrimary);
+                if (primaryImage) {
+                    yield tx.product.update({
+                        where: { id: newProduct.id },
+                        data: { imageUrl: primaryImage.fileUrl },
+                    });
+                }
+            }
+            // Return product with images
+            return tx.product.findUnique({
+                where: { id: newProduct.id },
+                include: {
+                    store: {
+                        select: {
+                            id: true,
+                            name: true,
+                            slug: true,
+                        },
+                    },
+                    images: {
+                        orderBy: { sortOrder: 'asc' },
+                    },
+                },
+            });
+        }));
         res.status(201).json(product);
     });
 }
@@ -119,27 +177,12 @@ export function updateProduct(req, res) {
         if (!existingProduct) {
             return res.status(404).json({ message: 'Product not found or access denied' });
         }
-        // If imageUrl is being updated and it's different from the current one,
-        // and the current imageUrl is from our upload service, delete the old image
-        if (data.imageUrl && data.imageUrl !== existingProduct.imageUrl) {
-            const currentImageUrl = existingProduct.imageUrl;
-            // Check if the current image is from our upload service
-            if (currentImageUrl.includes('/uploads/')) {
-                try {
-                    // Extract filename from URL
-                    const urlParts = currentImageUrl.split('/');
-                    const fileName = urlParts.slice(-2).join('/'); // Get 'uploads/filename.ext'
-                    yield deleteImage({ fileName });
-                }
-                catch (error) {
-                    console.warn('Failed to delete old product image:', error);
-                    // Don't fail the update if image deletion fails
-                }
-            }
-        }
+        // Extract product data (images handled separately via dedicated endpoints)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { images } = data, productData = __rest(data, ["images"]);
         const product = yield prisma.product.update({
             where: { id },
-            data,
+            data: productData,
             include: {
                 store: {
                     select: {
@@ -147,6 +190,9 @@ export function updateProduct(req, res) {
                         name: true,
                         slug: true,
                     },
+                },
+                images: {
+                    orderBy: { sortOrder: 'asc' },
                 },
             },
         });
@@ -170,24 +216,24 @@ export function deleteProduct(req, res) {
                     owner: { id: userId },
                 },
             },
+            include: {
+                images: true,
+            },
         });
         if (!existingProduct) {
             return res.status(404).json({ message: 'Product not found or access denied' });
         }
-        // Delete the product image if it's from our upload service
-        const imageUrl = existingProduct.imageUrl;
-        if (imageUrl.includes('/uploads/')) {
+        // Delete all product images from storage
+        for (const image of existingProduct.images) {
             try {
-                // Extract filename from URL
-                const urlParts = imageUrl.split('/');
-                const fileName = urlParts.slice(-2).join('/'); // Get 'uploads/filename.ext'
-                yield deleteImage({ fileName });
+                yield deleteImage({ fileName: image.fileName });
             }
             catch (error) {
                 console.warn('Failed to delete product image:', error);
                 // Don't fail the deletion if image deletion fails
             }
         }
+        // Delete the product (this will cascade delete images from database)
         yield prisma.product.delete({
             where: { id },
         });

@@ -4,13 +4,15 @@ export function authGuard(req, res, next) {
     const header = req.headers.authorization || '';
     const [, token] = header.split(' ');
     if (!token)
-        return res.status(401).json({ message: 'Missing token' });
+        return res
+            .status(401)
+            .json({ message: 'Authentication required - please provide a valid token' });
     try {
         req.user = verifyToken(token); // Augment Express.Request in a `types/` declaration
         next();
     }
     catch (_a) {
-        res.status(401).json({ message: 'Invalid token' });
+        res.status(401).json({ message: 'Invalid or expired token - please authenticate again' });
     }
 }
 export function requireVendor(req, res, next) {

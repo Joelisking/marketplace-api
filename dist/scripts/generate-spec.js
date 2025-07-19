@@ -12,6 +12,7 @@ import '../src/routes/catalogue.routes'; // Ensure catalogue OpenAPI registratio
 import '../src/routes/vendor.routes'; // Ensure vendor OpenAPI registrations are included
 import '../src/routes/analytics.routes'; // Ensure analytics OpenAPI registrations are included
 import '../src/routes/upload.routes'; // Ensure upload OpenAPI registrations are included
+import '../src/routes/product-image.routes';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 // Register all Zod schemas automatically
