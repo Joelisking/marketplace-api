@@ -4,10 +4,10 @@ import YAML from 'yamljs';
 import path from 'path';
 
 const router = express.Router();
-let spec: any;
+let spec: Record<string, unknown>;
 try {
   spec = YAML.load(path.join(__dirname, '../openapi.yaml'));
-} catch (e) {
+} catch {
   spec = {};
 }
 

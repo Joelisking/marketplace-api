@@ -20,6 +20,6 @@ export async function listStores(params: { q?: string; page: number; limit: numb
   }));
 }
 
-export function countStores(where: any) {
+export function countStores(where: Record<string, unknown>) {
   return prisma.store.count({ where });
 }

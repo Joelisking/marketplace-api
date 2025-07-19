@@ -12,7 +12,7 @@ let spec;
 try {
     spec = yamljs_1.default.load(path_1.default.join(__dirname, '../openapi.yaml'));
 }
-catch (e) {
+catch (_a) {
     spec = {};
 }
 router.use('/', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(spec));

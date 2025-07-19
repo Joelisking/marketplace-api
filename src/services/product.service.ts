@@ -45,6 +45,6 @@ export async function listProducts(params: {
   });
 }
 
-export function countProducts(where: any) {
+export function countProducts(where: Record<string, unknown>) {
   return prisma.product.count({ where });
 }
