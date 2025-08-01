@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { z } from 'zod';
@@ -16,9 +17,23 @@ const S3_BUCKET = process.env.S3_BUCKET || 'marketplace-images';
 const S3_REGION = process.env.S3_REGION || 'us-east-1';
 const CDN_BASE_URL = process.env.CDN_BASE_URL || S3_ENDPOINT;
 
-// S3 client configuration
+// For presigned URLs, we need to use the external endpoint that the frontend can access
+const PRESIGNED_URL_ENDPOINT = process.env.PRESIGNED_URL_ENDPOINT || 'http://localhost:9000';
+
+// S3 client configuration for backend operations
 const s3Client = new S3Client({
   endpoint: S3_ENDPOINT,
+  region: S3_REGION,
+  credentials: {
+    accessKeyId: S3_ACCESS_KEY,
+    secretAccessKey: S3_SECRET_KEY,
+  },
+  forcePathStyle: true, // Required for MinIO
+});
+
+// S3 client configuration for generating presigned URLs (uses external endpoint)
+const presignedUrlClient = new S3Client({
+  endpoint: PRESIGNED_URL_ENDPOINT,
   region: S3_REGION,
   credentials: {
     accessKeyId: S3_ACCESS_KEY,
@@ -95,7 +110,7 @@ export async function generateUploadUrl(request: UploadRequest): Promise<{
     ContentType: validatedRequest.contentType,
   });
 
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
+  const uploadUrl = await getSignedUrl(presignedUrlClient, command, { expiresIn: 3600 }); // 1 hour
 
   // Generate public URL via CDN
   const fileUrl = `${CDN_BASE_URL}/${S3_BUCKET}/${fileName}`;
@@ -128,7 +143,7 @@ export async function generateEnhancedUploadUrl(
     ContentType: `image/${optimizedFormat}`,
   });
 
-  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
+  const uploadUrl = await getSignedUrl(presignedUrlClient, command, { expiresIn: 3600 });
 
   // Generate public URL
   const fileUrl = `${CDN_BASE_URL}/${S3_BUCKET}/${fileName}`;
@@ -272,8 +287,30 @@ export async function deleteImage(request: DeleteRequest): Promise<void> {
  */
 export async function initializeBucket(): Promise<void> {
   try {
-    // For MinIO, we'll assume the bucket exists or create it manually
-    // In production with AWS S3, you'd want to create the bucket programmatically
+    // Check if bucket exists by trying to list objects
+    const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
+    const listCommand = new ListObjectsV2Command({
+      Bucket: S3_BUCKET,
+      MaxKeys: 1,
+    });
+
+    try {
+      await s3Client.send(listCommand);
+      console.log(`✅ Bucket ${S3_BUCKET} exists and is accessible`);
+    } catch (error: any) {
+      if (error.name === 'NoSuchBucket') {
+        console.log(`📦 Creating bucket ${S3_BUCKET}...`);
+        const { CreateBucketCommand } = await import('@aws-sdk/client-s3');
+        const createCommand = new CreateBucketCommand({
+          Bucket: S3_BUCKET,
+        });
+        await s3Client.send(createCommand);
+        console.log(`✅ Bucket ${S3_BUCKET} created successfully`);
+      } else {
+        throw error;
+      }
+    }
+
     console.log(`✅ Using S3-compatible storage at ${S3_ENDPOINT}`);
     console.log(`📦 Bucket: ${S3_BUCKET}`);
   } catch (error) {

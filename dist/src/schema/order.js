@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IDParam, PaginationQuery, PageMeta } from './common';
+import { PaginationQuery, PageMeta } from './common';
 export const CheckoutItem = z.object({
     productId: z.cuid(),
     quantity: z.number().int().min(1),
@@ -41,7 +41,9 @@ export const OrderListResponse = z.object({
     items: z.array(OrderResponse),
     meta: PageMeta,
 });
-export const OrderIdParam = IDParam;
+export const OrderIdParam = z.object({
+    orderId: z.string().describe('Order ID'),
+});
 export const OrderListQuery = PaginationQuery.extend({
     storeId: z.string().optional(),
     status: z

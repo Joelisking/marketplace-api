@@ -19,6 +19,38 @@ export function authGuard(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+export function requireSuper(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  // Check if user has SUPER role
+  if (user.role !== 'SUPER') {
+    return res.status(403).json({
+      message: 'Super admin access required - you must have super admin permissions',
+    });
+  }
+
+  next();
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  // Check if user has ADMIN or SUPER role
+  if (user.role !== 'ADMIN' && user.role !== 'SUPER') {
+    return res.status(403).json({
+      message: 'Admin access required - you must have admin permissions',
+    });
+  }
+
+  next();
+}
+
 export function requireVendor(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
   if (!user) {
@@ -33,9 +65,19 @@ export function requireVendor(req: Request, res: Response, next: NextFunction) {
   }
 
   // Check if user has a store (vendors must own a store)
+  // First check if user has a storeId, then check if that store exists
+  if (!user.storeId) {
+    return res
+      .status(403)
+      .json({ message: 'Vendor role required - you must own a store to create products' });
+  }
+
   prisma.store
     .findFirst({
-      where: { owner: { id: user.id } },
+      where: {
+        id: user.storeId,
+        owner: { id: user.id },
+      },
     })
     .then((store) => {
       if (!store) {
@@ -49,6 +91,36 @@ export function requireVendor(req: Request, res: Response, next: NextFunction) {
     })
     .catch(() => {
       res.status(500).json({ message: 'Internal server error' });
+    });
+}
+
+export function requireVendorRole(req: Request, res: Response, next: NextFunction) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  // Check if user has VENDOR role
+  if (user.role !== 'VENDOR') {
+    return res.status(403).json({
+      message: 'Vendor role required - you must have vendor permissions to access this resource',
+    });
+  }
+
+  // Optionally check for store ownership but don't require it
+  prisma.store
+    .findFirst({
+      where: { owner: { id: user.id } },
+    })
+    .then((store) => {
+      if (store) {
+        (req as any).userStore = store; // Add store info to request if available
+      }
+      next();
+    })
+    .catch(() => {
+      // Continue even if store lookup fails
+      next();
     });
 }
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import express from 'express';
 import dotenv from 'dotenv';
 import apiDocs from './openapi';
@@ -13,8 +12,16 @@ import uploadRoutes from './routes/upload.routes';
 import enhancedUploadRoutes from './routes/enhanced-upload.routes';
 import productImageRoutes from './routes/product-image.routes';
 import cartRoutes from './routes/cart.routes';
+import enhancedCartRoutes from './routes/enhanced-cart.routes';
 import orderRoutes from './routes/order.routes';
-import { ZodError } from 'zod';
+import paymentRoutes from './routes/payment.routes';
+import superAdminRoutes from './routes/super-admin.routes';
+import customerRoutes from './routes/customer.routes';
+import notificationRoutes from './routes/notification.routes';
+import vendorOnboardingRoutes from './routes/vendor-onboarding.routes';
+import bankVerificationRoutes from './routes/bank-verification.routes';
+import { errorHandler } from './middlewares/error-handler';
+import { initializeBucket } from './services/upload.service';
 dotenv.config();
 const app = express();
 app.use(helmet());
@@ -25,7 +32,7 @@ const generalLimiter = rateLimit({
     max: 100,
 });
 app.use(generalLimiter);
-const authLimiter = rateLimit({ windowMs: 60000, max: 20 });
+const authLimiter = rateLimit({ windowMs: 60_000, max: 20 });
 app.use('/docs', apiDocs);
 app.use('/auth', authLimiter, authRoutes);
 app.use('/', catalogueRoutes);
@@ -35,22 +42,30 @@ app.use('/upload', uploadRoutes);
 app.use('/enhanced-upload', enhancedUploadRoutes);
 app.use('/vendor/products', productImageRoutes);
 app.use('/', cartRoutes);
+app.use('/', enhancedCartRoutes);
 app.use('/', orderRoutes);
-// Error handling middleware
-app.use((error, req, res, _next) => {
-    if (error instanceof ZodError) {
-        return res.status(400).json({
-            message: 'Validation error',
-            errors: error.issues,
+app.use('/', paymentRoutes);
+app.use('/super-admin', superAdminRoutes);
+app.use('/', customerRoutes);
+app.use('/', notificationRoutes);
+app.use('/vendor-onboarding', vendorOnboardingRoutes);
+app.use('/bank-verification', bankVerificationRoutes);
+// Global error handling middleware
+app.use(errorHandler);
+const port = process.env.PORT || 4000;
+// Initialize the application
+async function startServer() {
+    try {
+        // Initialize S3 bucket
+        await initializeBucket();
+        app.listen(port, () => {
+            console.log(`🚀 Listening on http://localhost:${port}`);
         });
     }
-    console.error('Unhandled error:', error);
-    res.status(500).json({
-        message: 'Internal server error',
-    });
-});
-const port = process.env.PORT || 4000;
-app.listen(port, () => {
-    console.log(`🚀 Listening on http://localhost:${port}`);
-});
+    catch (error) {
+        console.error('❌ Failed to start server:', error);
+        process.exit(1);
+    }
+}
+startServer();
 export { app };

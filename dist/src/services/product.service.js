@@ -1,46 +1,92 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from '../lib/prisma';
-export function listProducts(params) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { q, category, storeId, page, limit } = params;
-        const whereConditions = [];
-        if (storeId) {
-            whereConditions.push({ storeId });
-        }
-        if (q) {
-            whereConditions.push({ name: { contains: q, mode: 'insensitive' } });
-        }
-        if (category) {
-            // Note: Category filtering is not implemented in the current schema
-            // This would need to be added to the Product model in Prisma schema
-            console.warn('Category filtering requested but not implemented');
-        }
-        whereConditions.push({ visibleMarket: true });
-        return prisma.product.findMany({
-            where: {
-                AND: whereConditions,
-            },
-            skip: (page - 1) * limit,
-            take: limit,
-            include: {
-                store: {
-                    select: {
-                        id: true,
-                        name: true,
-                        slug: true,
-                    },
+export async function listProducts(params) {
+    const { q, category, storeId, page, limit } = params;
+    // If we have a search query, use enhanced search with pg_trgm
+    if (q) {
+        return enhancedSearch({ ...params, q });
+    }
+    const whereConditions = [];
+    if (storeId) {
+        whereConditions.push({ storeId });
+    }
+    if (category) {
+        whereConditions.push({ category: { equals: category } });
+    }
+    whereConditions.push({ visibleMarket: true });
+    return prisma.product.findMany({
+        where: {
+            AND: whereConditions,
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+            store: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
                 },
             },
-        });
+        },
+        orderBy: { createdAt: 'desc' },
     });
+}
+/**
+ * Enhanced search using pg_trgm for fuzzy matching
+ */
+async function enhancedSearch(params) {
+    const { q, category, storeId, page, limit } = params;
+    const offset = (page - 1) * limit;
+    // Build WHERE conditions
+    const conditions = ['p."visibleMarket" = true'];
+    const params_array = [q];
+    if (storeId) {
+        conditions.push('p."storeId" = $' + (params_array.length + 1));
+        params_array.push(storeId);
+    }
+    if (category) {
+        conditions.push('p."category" = $' + (params_array.length + 1));
+        params_array.push(category);
+    }
+    const whereClause = conditions.join(' AND ');
+    // Query with pg_trgm similarity
+    const query = `
+    SELECT 
+      p.*,
+      s.id as "storeId",
+      s.name as "storeName",
+      s.slug as "storeSlug",
+      GREATEST(
+        similarity(p.name, $1),
+        similarity(COALESCE(p.description, ''), $1)
+      ) as similarity_score
+    FROM "Product" p
+    LEFT JOIN "Store" s ON p."storeId" = s.id
+    WHERE ${whereClause}
+      AND (
+        p.name ILIKE $1 
+        OR p.description ILIKE $1
+        OR p.name % $1
+        OR p.description % $1
+      )
+    ORDER BY 
+      CASE WHEN p.name ILIKE $1 THEN 1 ELSE 2 END,
+      similarity_score DESC,
+      p."createdAt" DESC
+    LIMIT $${params_array.length + 1} OFFSET $${params_array.length + 2}
+  `;
+    const products = await prisma.$queryRawUnsafe(query, ...params_array, limit, offset);
+    // Transform the raw results to match Prisma format
+    return products.map((product) => ({
+        ...product,
+        store: {
+            id: product.storeId,
+            name: product.storeName,
+            slug: product.storeSlug,
+        },
+        storeId: product.storeId,
+    }));
 }
 export function countProducts(where) {
     return prisma.product.count({ where });

@@ -4,18 +4,33 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
-import { RegisterBody, LoginBody, RefreshBody, AuthResponse, MeResponse } from '../schema';
+import {
+  RegisterBody,
+  LoginBody,
+  RefreshBody,
+  AuthResponse,
+  MeResponse,
+  UpdateUserBody,
+} from '../schema';
 import { signAccess, signRefresh, verifyToken } from '../utils/jwt';
+import { asyncHandler, createError } from '../middlewares/error-handler';
 
-export async function register(req: Request, res: Response) {
+export const register = asyncHandler(async (req: Request, res: Response) => {
   const body = RegisterBody.parse(req.body);
 
   const exists = await prisma.user.findUnique({ where: { email: body.email } });
-  if (exists) return res.status(409).json({ message: 'Email already in use' });
+  if (exists) throw createError('Email already in use', 409);
 
   const password = await bcrypt.hash(body.password, 10);
   const user = await prisma.user.create({
-    data: { email: body.email, password, role: body.role },
+    data: {
+      email: body.email,
+      password,
+      role: body.role,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      phone: body.phone,
+    },
   });
 
   const accessToken = signAccess(user);
@@ -23,12 +38,26 @@ export async function register(req: Request, res: Response) {
 
   const response: z.infer<typeof AuthResponse> = { accessToken, refreshToken, user };
   res.status(201).json(response);
-}
+});
 
 export async function login(req: Request, res: Response) {
   const body = LoginBody.parse(req.body);
 
-  const user = await prisma.user.findUnique({ where: { email: body.email } });
+  const user = await prisma.user.findUnique({
+    where: { email: body.email },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+      role: true,
+      storeId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
   if (!user || !(await bcrypt.compare(body.password, user.password))) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
@@ -44,7 +73,21 @@ export async function refresh(req: Request, res: Response) {
   const { refreshToken } = RefreshBody.parse(req.body);
   const decoded = verifyToken<{ sub: string }>(refreshToken);
 
-  const user = await prisma.user.findUnique({ where: { id: decoded.sub } });
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.sub },
+    select: {
+      id: true,
+      email: true,
+      password: true,
+      role: true,
+      storeId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
   if (!user) return res.status(401).json({ message: 'Invalid token' });
 
   const accessToken = signAccess(user);
@@ -54,7 +97,19 @@ export async function refresh(req: Request, res: Response) {
 }
 
 export async function getAllUsers(req: Request, res: Response) {
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      storeId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
   res.json(users);
 }
 
@@ -72,6 +127,11 @@ export async function me(req: Request, res: Response) {
       email: true,
       role: true,
       storeId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      createdAt: true,
+      updatedAt: true,
     },
   });
 
@@ -79,6 +139,40 @@ export async function me(req: Request, res: Response) {
     return res.status(404).json({ message: 'User not found' });
   }
 
-  const response: z.infer<typeof MeResponse> = freshUser;
+  const response: z.infer<typeof MeResponse> = { user: freshUser };
+  res.json(response);
+}
+
+export async function updateUser(req: Request, res: Response) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const body = UpdateUserBody.parse(req.body);
+
+  // Update user in database
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      firstName: body.firstName,
+      lastName: body.lastName,
+      phone: body.phone,
+      updatedAt: new Date(),
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      storeId: true,
+      firstName: true,
+      lastName: true,
+      phone: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+
+  const response: z.infer<typeof MeResponse> = { user: updatedUser };
   res.json(response);
 }

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OrderEventType" ADD VALUE 'VENDOR_PAYOUTS_PROCESSED';

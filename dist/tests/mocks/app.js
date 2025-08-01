@@ -18,7 +18,7 @@ const generalLimiter = rateLimit({
     max: 100,
 });
 app.use(generalLimiter);
-const authLimiter = rateLimit({ windowMs: 60000, max: 20 });
+const authLimiter = rateLimit({ windowMs: 60_000, max: 20 });
 // Skip OpenAPI docs for tests
 // app.use('/docs', apiDocs);
 app.use('/auth', authLimiter, authRoutes);

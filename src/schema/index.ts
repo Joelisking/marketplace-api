@@ -5,3 +5,6 @@ export * from './product';
 export * from './store';
 export * from './order';
 export * from './cart';
+export * from './customer';
+export * from './notification';
+export * from './vendor';

@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import request from 'supertest';
 import { app } from '../src/index';
 import { prisma } from '../src/lib/prisma';
@@ -14,22 +5,22 @@ import { createTestUser } from './utils/test-helpers';
 describe('Upload Endpoints', () => {
     let vendorUser;
     let customerUser;
-    beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
-        vendorUser = yield createTestUser('vendor@upload.test.com', 'VENDOR');
-        customerUser = yield createTestUser('customer@upload.test.com', 'CUSTOMER');
-    }));
-    afterAll(() => __awaiter(void 0, void 0, void 0, function* () {
-        yield prisma.user.deleteMany({
+    beforeAll(async () => {
+        vendorUser = await createTestUser('vendor@upload.test.com', 'VENDOR');
+        customerUser = await createTestUser('customer@upload.test.com', 'CUSTOMER');
+    });
+    afterAll(async () => {
+        await prisma.user.deleteMany({
             where: {
                 email: {
                     in: [vendorUser.email, customerUser.email],
                 },
             },
         });
-    }));
+    });
     describe('POST /upload/presigned-url', () => {
-        it('should generate presigned URL for vendor', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should generate presigned URL for vendor', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({
@@ -45,9 +36,9 @@ describe('Upload Endpoints', () => {
             expect(response.body.expiresIn).toBe(3600);
             expect(response.body.uploadUrl).toContain('http');
             expect(response.body.fileUrl).toContain('http');
-        }));
-        it('should fail without authentication', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail without authentication', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .send({
                 fileName: 'test-image.jpg',
@@ -56,9 +47,9 @@ describe('Upload Endpoints', () => {
             });
             expect(response.status).toBe(401);
             expect(response.body).toHaveProperty('message');
-        }));
-        it('should fail for non-vendor users', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail for non-vendor users', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .set('Authorization', `Bearer ${customerUser.token}`)
                 .send({
@@ -68,9 +59,9 @@ describe('Upload Endpoints', () => {
             });
             expect(response.status).toBe(403);
             expect(response.body).toHaveProperty('message');
-        }));
-        it('should fail with invalid file type', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail with invalid file type', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({
@@ -81,9 +72,9 @@ describe('Upload Endpoints', () => {
             expect(response.status).toBe(400);
             expect(response.body).toHaveProperty('message');
             expect(response.body.message).toBe('Invalid upload request');
-        }));
-        it('should fail with file too large', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail with file too large', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({
@@ -94,9 +85,9 @@ describe('Upload Endpoints', () => {
             expect(response.status).toBe(400);
             expect(response.body).toHaveProperty('message');
             expect(response.body.message).toBe('Invalid upload request');
-        }));
-        it('should fail with missing required fields', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail with missing required fields', async () => {
+            const response = await request(app)
                 .post('/upload/presigned-url')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({
@@ -106,11 +97,11 @@ describe('Upload Endpoints', () => {
             expect(response.status).toBe(400);
             expect(response.body).toHaveProperty('message');
             expect(response.body.message).toBe('Invalid upload request');
-        }));
+        });
     });
     describe('DELETE /upload/delete', () => {
-        it('should delete image for vendor', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should delete image for vendor', async () => {
+            const response = await request(app)
                 .delete('/upload/delete')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({
@@ -119,16 +110,16 @@ describe('Upload Endpoints', () => {
             expect(response.status).toBe(200);
             expect(response.body).toHaveProperty('message');
             expect(response.body.message).toBe('Image deleted successfully');
-        }));
-        it('should fail without authentication', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app).delete('/upload/delete').send({
+        });
+        it('should fail without authentication', async () => {
+            const response = await request(app).delete('/upload/delete').send({
                 fileName: 'uploads/test-file.jpg',
             });
             expect(response.status).toBe(401);
             expect(response.body).toHaveProperty('message');
-        }));
-        it('should fail for non-vendor users', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail for non-vendor users', async () => {
+            const response = await request(app)
                 .delete('/upload/delete')
                 .set('Authorization', `Bearer ${customerUser.token}`)
                 .send({
@@ -136,15 +127,15 @@ describe('Upload Endpoints', () => {
             });
             expect(response.status).toBe(403);
             expect(response.body).toHaveProperty('message');
-        }));
-        it('should fail with missing fileName', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail with missing fileName', async () => {
+            const response = await request(app)
                 .delete('/upload/delete')
                 .set('Authorization', `Bearer ${vendorUser.token}`)
                 .send({});
             expect(response.status).toBe(400);
             expect(response.body).toHaveProperty('message');
             expect(response.body.message).toBe('Invalid delete request');
-        }));
+        });
     });
 });

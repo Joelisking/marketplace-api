@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as analytics from '../controllers/analytics.controller';
 import { registry } from '../lib/openapi';
+import { StoreSlugParam } from '../schema';
 
 // OpenAPI registration for analytics endpoints
 registry.registerPath({
@@ -63,6 +64,9 @@ registry.registerPath({
   method: 'get',
   path: '/analytics/stores/{slug}/best-sellers',
   tags: ['analytics'],
+  request: {
+    params: StoreSlugParam,
+  },
   responses: {
     200: {
       description: 'Store-specific best-selling products',

@@ -1,6 +1,5 @@
 // src/schema/cart.ts
 import { z } from 'zod';
-import { IDParam } from './common';
 
 export const AddToCartBody = z.object({
   productId: z.string().min(1),
@@ -34,4 +33,6 @@ export const CartSummaryResponse = z.object({
   total: z.number(),
 });
 
-export const CartItemIdParam = IDParam;
+export const CartItemIdParam = z.object({
+  productId: z.string().describe('Product ID'),
+});

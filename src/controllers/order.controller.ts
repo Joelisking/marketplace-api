@@ -10,8 +10,10 @@ import {
   getVendorOrderStats,
   CreateOrderSchema,
   UpdateOrderStatusSchema,
-  GetOrdersSchema,
 } from '../services/order.service';
+import { prisma } from '../lib/prisma';
+import { OrderListQuery } from '../schema/order';
+import { CustomerOrderQuery } from '../schema/customer';
 
 /**
  * Create order from cart (checkout)
@@ -47,7 +49,14 @@ export async function checkoutOrder(req: Request, res: Response) {
 export async function getCustomerOrderHistory(req: Request, res: Response) {
   try {
     const customerId = (req as any).user.id;
-    const query = GetOrdersSchema.parse(req.query);
+    const parsedQuery = CustomerOrderQuery.parse(req.query);
+
+    // Transform the parsed query to match the service expectations
+    const query = {
+      page: parsedQuery.page || 1,
+      limit: parsedQuery.limit || 20,
+      status: parsedQuery.status,
+    };
 
     const result = await getCustomerOrders(customerId, query);
 
@@ -106,10 +115,19 @@ export async function getOrderDetails(req: Request, res: Response) {
 export async function getVendorOrderList(req: Request, res: Response) {
   try {
     const vendorId = (req as any).user.id;
-    const query = GetOrdersSchema.parse(req.query);
+    const parsedQuery = OrderListQuery.parse(req.query);
+
+    // Transform the parsed query to match the service expectations
+    const query = {
+      page: parsedQuery.page || 1,
+      limit: parsedQuery.limit || 20,
+      status: parsedQuery.status,
+      startDate: parsedQuery.startDate,
+      endDate: parsedQuery.endDate,
+    };
 
     // Get vendor's store ID
-    const user = await (req as any).prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: vendorId },
       select: { storeId: true },
     });
@@ -146,7 +164,7 @@ export async function getVendorOrderDetails(req: Request, res: Response) {
     const { orderId } = req.params;
 
     // Get vendor's store ID
-    const user = await (req as any).prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: vendorId },
       select: { storeId: true },
     });
@@ -193,7 +211,7 @@ export async function updateVendorOrderStatus(req: Request, res: Response) {
     const body = UpdateOrderStatusSchema.parse(req.body);
 
     // Get vendor's store ID
-    const user = await (req as any).prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: vendorId },
       select: { storeId: true },
     });
@@ -241,7 +259,7 @@ export async function getVendorOrderStatistics(req: Request, res: Response) {
     const { days = 30 } = req.query;
 
     // Get vendor's store ID
-    const user = await (req as any).prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: vendorId },
       select: { storeId: true },
     });

@@ -16,6 +16,12 @@ import '../src/routes/product-image.routes';
 import '../src/routes/cart.routes'; // Ensure cart OpenAPI registrations are included
 import '../src/routes/enhanced-cart.routes'; // Ensure enhanced cart OpenAPI registrations are included
 import '../src/routes/order.routes'; // Ensure order OpenAPI registrations are included
+import '../src/routes/customer.routes'; // Ensure customer OpenAPI registrations are included
+import '../src/routes/notification.routes'; // Ensure notification OpenAPI registrations are included
+import '../src/routes/super-admin.routes'; // Ensure super admin OpenAPI registrations are included
+import '../src/routes/vendor-onboarding.routes'; // Ensure vendor-onboarding OpenAPI registrations are included
+import '../src/routes/bank-verification.routes'; // Ensure bank-verification OpenAPI registrations are included
+// import '../src/routes/payment.routes'; // Ensure payment OpenAPI registrations are included
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -51,7 +57,7 @@ const doc = generator.generateDocument({
   ],
   security: [{ bearerAuth: [] }],
   tags: [
-    { name: 'auth', description: 'Authentication endpoints' },
+    { name: 'Auth', description: 'Authentication endpoints' },
     { name: 'catalogue', description: 'Product and store catalogue endpoints' },
     { name: 'vendor', description: 'Vendor dashboard and management endpoints' },
     { name: 'analytics', description: 'Analytics and best-selling products endpoints' },
@@ -59,6 +65,9 @@ const doc = generator.generateDocument({
     { name: 'cart', description: 'Cart management endpoints' },
     { name: 'Enhanced Cart', description: 'Enhanced cart with sync capabilities' },
     { name: 'orders', description: 'Order management endpoints' },
+    { name: 'customer', description: 'Customer experience endpoints' },
+    { name: 'notifications', description: 'Notification management endpoints' },
+    // { name: 'payment', description: 'Paystack payment integration endpoints' },
   ],
 });
 

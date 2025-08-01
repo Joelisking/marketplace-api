@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IDParam, PaginationQuery, PageMeta } from './common';
+import { PaginationQuery, PageMeta } from './common';
 
 export const ProductImageBase = z.object({
   fileName: z.string().min(1),
@@ -52,7 +52,9 @@ export const ProductListResponse = z.object({
   meta: PageMeta,
 });
 
-export const ProductIdParam = IDParam;
+export const ProductIdParam = z.object({
+  id: z.string().describe('Product ID'),
+});
 export const ProductListQuery = PaginationQuery;
 
 export const ProductSearchQuery = z.object({

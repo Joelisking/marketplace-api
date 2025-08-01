@@ -6,6 +6,7 @@ import {
   reserveInventoryForCheckout,
   releaseInventory,
 } from './cart.service';
+import { sendOrderStatusNotification } from './notification.service';
 
 const prisma = new PrismaClient();
 
@@ -32,13 +33,18 @@ export const CreateOrderSchema = z.object({
 });
 
 export const UpdateOrderStatusSchema = z.object({
-  status: z.nativeEnum(OrderStatus),
+  status: z.enum(OrderStatus),
   reason: z.string().optional(),
 });
 
 export const GetOrdersSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
+  page: z.string().regex(/^\d+$/).default('1').transform(Number).pipe(z.number().int().min(1)),
+  limit: z
+    .string()
+    .regex(/^\d+$/)
+    .default('20')
+    .transform(Number)
+    .pipe(z.number().int().min(1).max(100)),
   status: z.enum(OrderStatus).optional(),
   startDate: z.iso.datetime().optional(),
   endDate: z.iso.datetime().optional(),
@@ -215,7 +221,13 @@ export async function getOrderById(orderId: string): Promise<OrderWithDetails> {
  */
 export async function getCustomerOrders(
   customerId: string,
-  request: GetOrdersRequest,
+  request: {
+    page: number;
+    limit: number;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  },
 ): Promise<{
   orders: OrderWithDetails[];
   pagination: {
@@ -225,7 +237,7 @@ export async function getCustomerOrders(
     totalPages: number;
   };
 }> {
-  const { page, limit, status, startDate, endDate } = GetOrdersSchema.parse(request);
+  const { page, limit, status, startDate, endDate } = request;
 
   // Build where clause
   const where: any = { customerId };
@@ -296,7 +308,13 @@ export async function getCustomerOrders(
  */
 export async function getVendorOrders(
   storeId: string,
-  request: GetOrdersRequest,
+  request: {
+    page: number;
+    limit: number;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+  },
 ): Promise<{
   orders: OrderWithDetails[];
   pagination: {
@@ -306,7 +324,7 @@ export async function getVendorOrders(
     totalPages: number;
   };
 }> {
-  const { page, limit, status, startDate, endDate } = GetOrdersSchema.parse(request);
+  const { page, limit, status, startDate, endDate } = request;
 
   // Build where clause
   const where: any = { storeId };
@@ -411,6 +429,14 @@ export async function updateOrderStatus(
       },
     });
   });
+
+  // Send notification for status change
+  try {
+    await sendOrderStatusNotification(orderId, status, currentOrder.status);
+  } catch (error) {
+    console.error('Failed to send order status notification:', error);
+    // Don't fail the order update if notification fails
+  }
 
   return getOrderById(orderId);
 }

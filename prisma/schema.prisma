@@ -9,20 +9,25 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  email     String     @unique
-  password  String
-  role      Role
-  storeId   String?    @unique
-  createdAt DateTime   @default(now())
-  firstName String?
-  lastName  String?
-  phone     String?
-  updatedAt DateTime?
-  address   Address?
-  cartItems CartItem[]
-  orders    Order[]
-  store     Store?     @relation("VendorStore", fields: [storeId], references: [id])
+  id                   String              @id @default(cuid())
+  email                String              @unique
+  password             String
+  role                 Role
+  storeId              String?             @unique
+  createdAt            DateTime            @default(now())
+  firstName            String?
+  lastName             String?
+  phone                String?
+  updatedAt            DateTime?
+  address              Address?
+  cartItems            CartItem[]
+  notifications        Notification[]      @relation("UserNotifications")
+  orders               Order[]
+  store                Store?              @relation("VendorStore", fields: [storeId], references: [id])
+  reviewedApplications VendorApplication[] @relation("VendorApplicationReviewer")
+  vendorApplication    VendorApplication?  @relation("VendorApplication")
+  verifiedDocuments    VendorDocument[]    @relation("DocumentVerifier")
+  vendorPayouts        VendorPayout[]      @relation("VendorPayouts")
 
   @@index([email])
   @@index([role])
@@ -43,20 +48,26 @@ model Address {
 }
 
 model Store {
-  id          String    @id @default(cuid())
-  name        String
-  slug        String    @unique
-  logoUrl     String?
-  createdAt   DateTime  @default(now())
-  description String?
-  isActive    Boolean   @default(true)
-  updatedAt   DateTime?
-  orders      Order[]
-  products    Product[]
-  owner       User?     @relation("VendorStore")
+  id                    String         @id @default(cuid())
+  name                  String
+  slug                  String         @unique
+  logoUrl               String?
+  createdAt             DateTime       @default(now())
+  description           String?
+  isActive              Boolean        @default(true)
+  updatedAt             DateTime?
+  paystackAccountActive Boolean        @default(false)
+  paystackAccountCode   String?
+  vendorId              String?
+  orders                Order[]
+  products              Product[]
+  owner                 User?          @relation("VendorStore")
+  vendorPayouts         VendorPayout[] @relation("StorePayouts")
 
   @@index([slug])
   @@index([isActive])
+  @@index([vendorId])
+  @@index([paystackAccountCode])
 }
 
 model Product {
@@ -74,6 +85,7 @@ model Product {
   sku           String?
   updatedAt     DateTime?
   weight        Float?
+  category      String?
   cartItems     CartItem[]
   orderItems    OrderItem[]
   store         Store          @relation(fields: [storeId], references: [id])
@@ -83,6 +95,7 @@ model Product {
   @@index([storeId, isActive])
   @@index([sku])
   @@index([visibleMarket, isActive])
+  @@index([category])
 }
 
 model ProductImage {
@@ -116,34 +129,35 @@ model CartItem {
 }
 
 model Order {
-  id                String        @id @default(cuid())
+  id                String         @id @default(cuid())
   customerId        String
   storeId           String
   status            OrderStatus
   paymentStatus     PaymentStatus
   total             Int
-  createdAt         DateTime      @default(now())
+  createdAt         DateTime       @default(now())
   updatedAt         DateTime?
   billingAddress    Json?
   cancelReason      String?
   cancelledAt       DateTime?
-  currency          String        @default("NGN")
+  currency          String         @default("NGN")
   deliveredAt       DateTime?
-  discount          Int           @default(0)
+  discount          Int            @default(0)
   estimatedDelivery DateTime?
   notes             String?
   paymentData       Json?
   paymentProvider   String?
   paymentReference  String?
-  shipping          Int           @default(0)
+  shipping          Int            @default(0)
   shippingAddress   Json?
   subtotal          Int
-  tax               Int           @default(0)
-  customer          User          @relation(fields: [customerId], references: [id])
-  store             Store         @relation(fields: [storeId], references: [id])
+  tax               Int            @default(0)
+  customer          User           @relation(fields: [customerId], references: [id])
+  store             Store          @relation(fields: [storeId], references: [id])
   orderEvents       OrderEvent[]
   items             OrderItem[]
   payments          Payment[]
+  vendorPayouts     VendorPayout[] @relation("OrderPayouts")
 
   @@index([customerId, createdAt])
   @@index([storeId, createdAt])
@@ -216,10 +230,117 @@ model InventoryLog {
   @@index([type])
 }
 
+model VendorPayout {
+  id                  String       @id @default(cuid())
+  vendorId            String
+  storeId             String
+  orderId             String
+  amount              Int
+  platformFee         Int
+  totalAmount         Int
+  status              PayoutStatus
+  paystackAccountCode String
+  metadata            Json?
+  processedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  order               Order        @relation("OrderPayouts", fields: [orderId], references: [id])
+  store               Store        @relation("StorePayouts", fields: [storeId], references: [id])
+  vendor              User         @relation("VendorPayouts", fields: [vendorId], references: [id])
+
+  @@index([vendorId, createdAt])
+  @@index([storeId, createdAt])
+  @@index([orderId])
+  @@index([paystackAccountCode])
+}
+
+model Notification {
+  id           String    @id @default(cuid())
+  userId       String
+  type         String
+  title        String
+  message      String
+  channels     String[]
+  priority     String
+  metadata     Json?
+  isRead       Boolean   @default(false)
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead])
+  @@index([type])
+  @@index([priority])
+}
+
+model VendorApplication {
+  id                   String                  @id @default(cuid())
+  userId               String                  @unique
+  businessName         String
+  businessType         BusinessType
+  businessDescription  String
+  businessAddress      String
+  businessPhone        String
+  taxIdentification    String?
+  bankName             String
+  bankAccountNumber    String
+  bankAccountName      String
+  bankCode             String
+  commissionRate       Float                   @default(5.0)
+  expectedMonthlySales ExpectedSalesVolume
+  productCategories    String[]
+  socialMediaLinks     Json?
+  status               VendorApplicationStatus @default(PENDING)
+  reviewNotes          String?
+  reviewedBy           String?
+  reviewedAt           DateTime?
+  approvedAt           DateTime?
+  rejectedAt           DateTime?
+  rejectionReason      String?
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  ghanaCardNumber      String?
+  reviewer             User?                   @relation("VendorApplicationReviewer", fields: [reviewedBy], references: [id])
+  user                 User                    @relation("VendorApplication", fields: [userId], references: [id], onDelete: Cascade)
+  businessDocuments    VendorDocument[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([businessType])
+  @@index([createdAt])
+}
+
+model VendorDocument {
+  id                String             @id @default(cuid())
+  applicationId     String
+  documentType      VendorDocumentType
+  fileName          String
+  fileUrl           String
+  fileSize          Int
+  mimeType          String
+  isVerified        Boolean            @default(false)
+  verificationNotes String?
+  uploadedAt        DateTime           @default(now())
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  side              GhanaCardSide?
+  application       VendorApplication  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  verifier          User?              @relation("DocumentVerifier", fields: [verifiedBy], references: [id])
+
+  @@index([applicationId])
+  @@index([documentType])
+  @@index([isVerified])
+  @@index([side])
+}
+
 enum Role {
   CUSTOMER
   VENDOR
   ADMIN
+  SUPER
 }
 
 enum PaymentStatus {
@@ -251,6 +372,7 @@ enum OrderEventType {
   ORDER_CANCELLED
   PAYMENT_FAILED
   PAYMENT_REFUNDED
+  VENDOR_PAYOUTS_PROCESSED
 }
 
 enum InventoryLogType {
@@ -259,4 +381,57 @@ enum InventoryLogType {
   ADJUSTMENT
   RESERVED
   RELEASED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum BusinessType {
+  INDIVIDUAL
+  SOLE_PROPRIETORSHIP
+  PARTNERSHIP
+  LIMITED_LIABILITY_COMPANY
+  CORPORATION
+  COOPERATIVE
+  OTHER
+}
+
+enum ExpectedSalesVolume {
+  UNDER_1000
+  ONE_TO_FIVE_THOUSAND
+  FIVE_TO_TEN_THOUSAND
+  TEN_TO_FIFTY_THOUSAND
+  FIFTY_TO_HUNDRED_THOUSAND
+  OVER_HUNDRED_THOUSAND
+}
+
+enum VendorApplicationStatus {
+  PENDING
+  UNDER_REVIEW
+  DOCUMENTS_REQUESTED
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VendorDocumentType {
+  BUSINESS_LICENSE
+  TAX_CLEARANCE
+  BANK_STATEMENT
+  IDENTITY_DOCUMENT
+  UTILITY_BILL
+  LEASE_AGREEMENT
+  INSURANCE_CERTIFICATE
+  OTHER
+  GHANA_CARD
+}
+
+enum GhanaCardSide {
+  FRONT
+  BACK
 }

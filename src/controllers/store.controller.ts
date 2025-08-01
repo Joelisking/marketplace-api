@@ -108,6 +108,7 @@ export async function createStore(req: Request, res: Response) {
     data: {
       ...data,
       owner: { connect: { id: userId } },
+      vendorId: userId, // Set vendorId for consistency
     },
     include: {
       owner: {
@@ -120,21 +121,24 @@ export async function createStore(req: Request, res: Response) {
     },
   });
 
-  // Promote user to VENDOR role
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: { role: 'VENDOR' },
-    select: {
-      id: true,
-      email: true,
-      role: true,
-    },
-  });
+  // Update user role to VENDOR if not already a vendor
+  let updatedUser = store.owner;
+  if (store.owner && store.owner.role !== 'VENDOR') {
+    updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'VENDOR' },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+      },
+    });
+  }
 
-  // Generate new token with updated role
+  // Generate new token with updated role and store ID
   const newToken = signAccess({
-    id: updatedUser.id,
-    role: updatedUser.role,
+    id: updatedUser?.id || userId,
+    role: updatedUser?.role || 'VENDOR',
     storeId: store.id,
   });
 

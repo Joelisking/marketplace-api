@@ -63,7 +63,7 @@ services:
       sleep 10;
       /usr/bin/mc alias set minio http://minio:9000 minio minio123;
       /usr/bin/mc mb minio/marketplace-images --ignore-existing;
-      /usr/bin/mc policy set public minio/marketplace-images;
+      /usr/bin/mc anonymous set public minio/marketplace-images;
       echo 'Bucket marketplace-images created successfully';
       "
 

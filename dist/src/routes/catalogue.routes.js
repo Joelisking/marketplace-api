@@ -27,6 +27,7 @@ registry.registerPath({
     method: 'post',
     path: '/products',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
@@ -108,6 +109,7 @@ registry.registerPath({
     method: 'put',
     path: '/products/{id}',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         params: schema.ProductIdParam,
         body: {
@@ -172,6 +174,7 @@ registry.registerPath({
     method: 'delete',
     path: '/products/{id}',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         params: schema.ProductIdParam,
     },
@@ -242,6 +245,7 @@ registry.registerPath({
     method: 'post',
     path: '/stores',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         body: {
             content: {
@@ -323,6 +327,7 @@ registry.registerPath({
     method: 'put',
     path: '/stores/{slug}',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         params: schema.StoreSlugParam,
         body: {
@@ -400,6 +405,7 @@ registry.registerPath({
     method: 'delete',
     path: '/stores/{slug}',
     tags: ['catalogue'],
+    security: [{ bearerAuth: [] }],
     request: {
         params: schema.StoreSlugParam,
     },

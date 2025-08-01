@@ -2,4 +2,8 @@ node_modules
 .env
 .env.local
 .env.example
-dist
+.docker.env
+dist/
+build/
+*.js.map
+*.d.ts

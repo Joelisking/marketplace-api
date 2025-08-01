@@ -23,8 +23,12 @@ export async function getVendorDashboard(req: Request, res: Response) {
     },
   });
 
+  // All vendors should have a store
   if (!store) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
   // Get comprehensive statistics
@@ -134,7 +138,10 @@ export async function getVendorProducts(req: Request, res: Response) {
   });
 
   if (!store) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
   // Build where clause
@@ -213,7 +220,10 @@ export async function getVendorProductStats(req: Request, res: Response) {
   });
 
   if (!store) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
   // Get various product statistics
@@ -310,7 +320,10 @@ export async function getVendorBestSellers(req: Request, res: Response) {
   });
 
   if (!store) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
   // Build date filter
@@ -416,10 +429,21 @@ export async function getVendorStore(req: Request, res: Response) {
   });
 
   if (!store) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
-  res.json(store);
+  res.json({
+    id: store.id,
+    name: store.name,
+    slug: store.slug,
+    logoUrl: store.logoUrl,
+    paystackAccountCode: store.paystackAccountCode,
+    paystackAccountActive: store.paystackAccountActive,
+    owner: store.owner,
+  });
 }
 
 export async function updateVendorStore(req: Request, res: Response) {
@@ -436,7 +460,10 @@ export async function updateVendorStore(req: Request, res: Response) {
   });
 
   if (!existingStore) {
-    return res.status(404).json({ message: 'Store not found' });
+    return res.status(500).json({
+      message: 'Store not found. This should not happen - please contact support.',
+      error: 'VENDOR_STORE_MISSING',
+    });
   }
 
   // If slug is being updated, check if it's available

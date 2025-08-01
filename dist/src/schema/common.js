@@ -11,9 +11,17 @@ export const PaginationQuery = z
     page: z
         .string()
         .regex(/^\d+$/)
+        .default('1')
         .transform((s) => parseInt(s, 10))
         .optional()
         .describe('1-based page number'),
+    limit: z
+        .string()
+        .regex(/^\d+$/)
+        .default('20')
+        .transform((s) => parseInt(s, 10))
+        .optional()
+        .describe('Number of items per page'),
 })
     .partial();
 export const PageMeta = z.object({

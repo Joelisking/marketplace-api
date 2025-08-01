@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import request from 'supertest';
 import { app } from './mocks/app';
 import { prisma } from '../src/lib/prisma';
@@ -16,13 +7,13 @@ describe('Vendor Dashboard Endpoints', () => {
     let vendorId;
     let storeId;
     const vendorEmail = `vendor-dashboard-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`;
-    beforeAll(() => __awaiter(void 0, void 0, void 0, function* () {
+    beforeAll(async () => {
         // Create test vendor and store
-        const vendor = yield createTestUser(vendorEmail, 'CUSTOMER');
+        const vendor = await createTestUser(vendorEmail, 'CUSTOMER');
         vendorId = vendor.id;
         vendorToken = vendor.token;
         // Create store (this will promote user to VENDOR role)
-        const store = yield createTestStore(vendorToken, {
+        const store = await createTestStore(vendorToken, {
             name: 'Dashboard Test Store',
             slug: `dashboard-test-store-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             logoUrl: 'https://example.com/logo.jpg',
@@ -33,34 +24,34 @@ describe('Vendor Dashboard Endpoints', () => {
             vendorToken = store.newToken;
         }
         // Create some test products
-        yield request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
+        await request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
             name: 'Test Product 1',
             price: 1000,
             stock: 5,
             imageUrl: 'https://example.com/product1.jpg',
             visibleMarket: true,
         });
-        yield request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
+        await request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
             name: 'Test Product 2',
             price: 2000,
             stock: 15,
             imageUrl: 'https://example.com/product2.jpg',
             visibleMarket: true,
         });
-        yield request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
+        await request(app).post('/products').set('Authorization', `Bearer ${vendorToken}`).send({
             name: 'Hidden Product',
             price: 500,
             stock: 3,
             imageUrl: 'https://example.com/hidden.jpg',
             visibleMarket: false,
         });
-    }));
-    afterAll(() => __awaiter(void 0, void 0, void 0, function* () {
-        yield cleanupTestData([vendorId], [storeId]);
-    }));
+    });
+    afterAll(async () => {
+        await cleanupTestData([vendorId], [storeId]);
+    });
     describe('GET /vendor/dashboard', () => {
-        it('should get vendor dashboard overview', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should get vendor dashboard overview', async () => {
+            const response = await request(app)
                 .get('/vendor/dashboard')
                 .set('Authorization', `Bearer ${vendorToken}`);
             expect(response.status).toBe(200);
@@ -82,27 +73,27 @@ describe('Vendor Dashboard Endpoints', () => {
                     lowStockProducts: expect.any(Number),
                 },
             });
-        }));
-        it('should fail without authentication', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app).get('/vendor/dashboard');
+        });
+        it('should fail without authentication', async () => {
+            const response = await request(app).get('/vendor/dashboard');
             expect(response.status).toBe(401);
             expect(response.body.message).toBe('Missing token');
-        }));
-        it('should fail for non-vendor users', () => __awaiter(void 0, void 0, void 0, function* () {
+        });
+        it('should fail for non-vendor users', async () => {
             // Create a customer user
-            const customer = yield createTestUser(`customer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`, 'CUSTOMER');
-            const response = yield request(app)
+            const customer = await createTestUser(`customer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}@test.com`, 'CUSTOMER');
+            const response = await request(app)
                 .get('/vendor/dashboard')
                 .set('Authorization', `Bearer ${customer.token}`);
             expect(response.status).toBe(403);
             expect(response.body.message).toBe('Vendor role required - you must have vendor permissions to create products');
             // Clean up
-            yield prisma.user.delete({ where: { id: customer.id } });
-        }));
+            await prisma.user.delete({ where: { id: customer.id } });
+        });
     });
     describe('GET /vendor/products', () => {
-        it('should get vendor products with pagination', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should get vendor products with pagination', async () => {
+            const response = await request(app)
                 .get('/vendor/products?page=1&limit=10')
                 .set('Authorization', `Bearer ${vendorToken}`);
             expect(response.status).toBe(200);
@@ -113,19 +104,19 @@ describe('Vendor Dashboard Endpoints', () => {
                 pageSize: 10,
             });
             expect(response.body.items.every((p) => p.storeId === storeId)).toBe(true);
-        }));
-        it('should filter vendor products by search', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should filter vendor products by search', async () => {
+            const response = await request(app)
                 .get('/vendor/products?q=Test Product')
                 .set('Authorization', `Bearer ${vendorToken}`);
             expect(response.status).toBe(200);
             expect(response.body.items).toHaveLength(2);
             expect(response.body.items.every((p) => p.name.includes('Test Product'))).toBe(true);
-        }));
+        });
     });
     describe('GET /vendor/products/stats', () => {
-        it('should get vendor product statistics', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should get vendor product statistics', async () => {
+            const response = await request(app)
                 .get('/vendor/products/stats')
                 .set('Authorization', `Bearer ${vendorToken}`);
             expect(response.status).toBe(200);
@@ -142,11 +133,11 @@ describe('Vendor Dashboard Endpoints', () => {
                     outOfStock: 0,
                 },
             });
-        }));
+        });
     });
     describe('GET /vendor/store', () => {
-        it('should get vendor store details', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        it('should get vendor store details', async () => {
+            const response = await request(app)
                 .get('/vendor/store')
                 .set('Authorization', `Bearer ${vendorToken}`);
             expect(response.status).toBe(200);
@@ -161,15 +152,15 @@ describe('Vendor Dashboard Endpoints', () => {
                     role: 'VENDOR',
                 },
             });
-        }));
+        });
     });
     describe('PUT /vendor/store', () => {
-        it('should update vendor store', () => __awaiter(void 0, void 0, void 0, function* () {
+        it('should update vendor store', async () => {
             const updateData = {
                 name: 'Updated Dashboard Store',
                 logoUrl: 'https://example.com/updated-logo.jpg',
             };
-            const response = yield request(app)
+            const response = await request(app)
                 .put('/vendor/store')
                 .set('Authorization', `Bearer ${vendorToken}`)
                 .send(updateData);
@@ -184,14 +175,14 @@ describe('Vendor Dashboard Endpoints', () => {
                     role: 'VENDOR',
                 },
             });
-        }));
-        it('should fail with invalid data', () => __awaiter(void 0, void 0, void 0, function* () {
-            const response = yield request(app)
+        });
+        it('should fail with invalid data', async () => {
+            const response = await request(app)
                 .put('/vendor/store')
                 .set('Authorization', `Bearer ${vendorToken}`)
                 .send({});
             expect(response.status).toBe(400);
             expect(response.body.message).toBe('At least one field must be provided');
-        }));
+        });
     });
 });

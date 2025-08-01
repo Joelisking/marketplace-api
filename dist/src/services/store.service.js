@@ -1,35 +1,60 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { prisma } from '../lib/prisma';
-export function listStores(params) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { q, page, limit } = params;
-        const stores = yield prisma.store.findMany({
-            where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
-            skip: (page - 1) * limit,
-            take: limit,
-            include: {
-                owner: true,
-            },
-        });
-        return stores.map((store) => {
-            var _a;
-            return ({
-                id: store.id,
-                ownerId: ((_a = store.owner) === null || _a === void 0 ? void 0 : _a.id) || '',
-                name: store.name,
-                slug: store.slug,
-                logoUrl: store.logoUrl,
-            });
-        });
+export async function listStores(params) {
+    const { q, page, limit } = params;
+    // If we have a search query, use enhanced search with pg_trgm
+    if (q) {
+        return enhancedStoreSearch({ ...params, q });
+    }
+    const stores = await prisma.store.findMany({
+        where: {},
+        skip: (page - 1) * limit,
+        take: limit,
+        include: {
+            owner: true,
+        },
     });
+    return stores.map((store) => ({
+        id: store.id,
+        ownerId: store.owner?.id || '',
+        name: store.name,
+        slug: store.slug,
+        logoUrl: store.logoUrl,
+    }));
+}
+/**
+ * Enhanced store search using pg_trgm for fuzzy matching
+ */
+async function enhancedStoreSearch(params) {
+    const { q, page, limit } = params;
+    const offset = (page - 1) * limit;
+    // Query with pg_trgm similarity
+    const query = `
+    SELECT 
+      s.*,
+      u.id as "ownerId",
+      similarity(s.name, $1) as similarity_score
+    FROM "Store" s
+    LEFT JOIN "User" u ON s."vendorId" = u.id
+    WHERE s."isActive" = true
+      AND (
+        s.name ILIKE $1 
+        OR s.name % $1
+      )
+    ORDER BY 
+      CASE WHEN s.name ILIKE $1 THEN 1 ELSE 2 END,
+      similarity_score DESC,
+      s."createdAt" DESC
+    LIMIT $2 OFFSET $3
+  `;
+    const stores = await prisma.$queryRawUnsafe(query, q, limit, offset);
+    // Transform the raw results to match expected format
+    return stores.map((store) => ({
+        id: store.id,
+        ownerId: store.ownerId || '',
+        name: store.name,
+        slug: store.slug,
+        logoUrl: store.logoUrl,
+    }));
 }
 export function countStores(where) {
     return prisma.store.count({ where });
