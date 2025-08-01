@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
 import * as vendor from '../controllers/vendor.controller';
 import * as vendorAnalytics from '../controllers/vendor-analytics.controller';
 import { authGuard, requireVendor } from '../middlewares/auth';
 import { registry } from '../lib/openapi';
 import { z } from 'zod';
 import { createVendorPaystackAccount, updateVendorPaystackAccount, getVendorPaystackAccount, listVendorPaystackAccounts, getVendorSettlements, processVendorPayouts, getVendorEarnings, getVendorPayoutHistory, CreateVendorAccountSchema, UpdateVendorAccountSchema, } from '../services/vendor-payment.service';
+const prisma = new PrismaClient();
 // OpenAPI registration for vendor endpoints
 registry.registerPath({
     method: 'get',
@@ -138,6 +140,8 @@ registry.registerPath({
                             name: { type: 'string' },
                             slug: { type: 'string' },
                             logoUrl: { type: 'string' },
+                            paystackAccountCode: { type: 'string' },
+                            paystackAccountActive: { type: 'boolean' },
                             owner: {
                                 type: 'object',
                                 properties: {
@@ -1020,6 +1024,87 @@ registry.registerPath({
     },
 });
 registry.registerPath({
+    method: 'post',
+    path: '/vendor/payment/account/from-application',
+    tags: ['vendor'],
+    security: [{ bearerAuth: [] }],
+    request: {
+        body: {
+            content: {
+                'application/json': {
+                    schema: {
+                        type: 'object',
+                        properties: {},
+                    },
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Paystack sub-account created successfully using application data',
+            content: {
+                'application/json': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            success: { type: 'boolean' },
+                            message: { type: 'string' },
+                            account: {
+                                type: 'object',
+                                properties: {
+                                    accountCode: { type: 'string' },
+                                    accountId: { type: 'string' },
+                                    status: { type: 'string' },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        400: {
+            description: 'Bad request - Application not approved or account already exists',
+            content: {
+                'application/json': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            message: { type: 'string' },
+                        },
+                    },
+                },
+            },
+        },
+        401: {
+            description: 'Unauthorized',
+            content: {
+                'application/json': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            message: { type: 'string' },
+                        },
+                    },
+                },
+            },
+        },
+        404: {
+            description: 'Vendor application or store not found',
+            content: {
+                'application/json': {
+                    schema: {
+                        type: 'object',
+                        properties: {
+                            message: { type: 'string' },
+                        },
+                    },
+                },
+            },
+        },
+    },
+});
+registry.registerPath({
     method: 'get',
     path: '/vendor/payment/earnings',
     tags: ['vendor'],
@@ -1232,6 +1317,51 @@ r.post('/payment/account', authGuard, requireVendor, async (req, res) => {
     }
     catch (err) {
         console.error('Create account error:', err);
+        res.status(400).json({ message: err.message || 'Internal server error' });
+    }
+});
+// Create Paystack sub-account using vendor's application data
+r.post('/payment/account/from-application', authGuard, requireVendor, async (req, res) => {
+    try {
+        const vendorId = req.user.id;
+        // Get vendor's application data
+        const { getVendorApplication } = await import('../services/vendor-onboarding.service');
+        const application = await getVendorApplication(vendorId);
+        if (!application) {
+            return res.status(404).json({ message: 'Vendor application not found' });
+        }
+        if (application.status !== 'APPROVED') {
+            return res
+                .status(400)
+                .json({ message: 'Vendor application must be approved to create Paystack account' });
+        }
+        // Get vendor's store
+        const store = await prisma.store.findFirst({
+            where: { owner: { id: vendorId } },
+        });
+        if (!store) {
+            return res.status(404).json({ message: 'Vendor store not found' });
+        }
+        if (store.paystackAccountCode) {
+            return res.status(400).json({ message: 'Paystack account already exists for this store' });
+        }
+        // Create Paystack sub-account using application data
+        const result = await createVendorPaystackAccount({
+            vendorId,
+            storeId: store.id,
+            businessName: application.businessName,
+            accountNumber: application.bankAccountNumber,
+            bankCode: application.bankCode,
+            percentageCharge: 5, // Default 5% platform fee
+        });
+        res.json({
+            success: true,
+            message: 'Paystack sub-account created successfully using application data',
+            account: result,
+        });
+    }
+    catch (err) {
+        console.error('Create account from application error:', err);
         res.status(400).json({ message: err.message || 'Internal server error' });
     }
 });

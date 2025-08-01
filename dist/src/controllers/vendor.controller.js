@@ -376,7 +376,15 @@ export async function getVendorStore(req, res) {
             error: 'VENDOR_STORE_MISSING',
         });
     }
-    res.json(store);
+    res.json({
+        id: store.id,
+        name: store.name,
+        slug: store.slug,
+        logoUrl: store.logoUrl,
+        paystackAccountCode: store.paystackAccountCode,
+        paystackAccountActive: store.paystackAccountActive,
+        owner: store.owner,
+    });
 }
 export async function updateVendorStore(req, res) {
     const userId = req.user?.id;

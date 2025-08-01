@@ -150,6 +150,7 @@ model Order {
   paymentReference  String?
   shipping          Int            @default(0)
   shippingAddress   Json?
+  deliveryZone      String?
   subtotal          Int
   tax               Int            @default(0)
   customer          User           @relation(fields: [customerId], references: [id])

@@ -21,7 +21,7 @@ import '../src/routes/notification.routes'; // Ensure notification OpenAPI regis
 import '../src/routes/super-admin.routes'; // Ensure super admin OpenAPI registrations are included
 import '../src/routes/vendor-onboarding.routes'; // Ensure vendor-onboarding OpenAPI registrations are included
 import '../src/routes/bank-verification.routes'; // Ensure bank-verification OpenAPI registrations are included
-// import '../src/routes/payment.routes'; // Ensure payment OpenAPI registrations are included
+import '../src/routes/payment.routes'; // Ensure payment OpenAPI registrations are included
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,7 +67,7 @@ const doc = generator.generateDocument({
     { name: 'orders', description: 'Order management endpoints' },
     { name: 'customer', description: 'Customer experience endpoints' },
     { name: 'notifications', description: 'Notification management endpoints' },
-    // { name: 'payment', description: 'Paystack payment integration endpoints' },
+    { name: 'payment', description: 'Paystack payment integration endpoints' },
   ],
 });
 

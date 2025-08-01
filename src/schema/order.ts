@@ -36,6 +36,7 @@ export const OrderResponse = z.object({
   shipping: z.number().int(),
   discount: z.number().int(),
   currency: z.string(),
+  deliveryZone: z.string().nullable(),
   items: z.array(OrderItemResponse),
   createdAt: z.date(),
   updatedAt: z.date().nullable(),

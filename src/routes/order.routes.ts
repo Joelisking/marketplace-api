@@ -39,9 +39,13 @@ registry.registerPath({
                   country: { type: 'string' },
                 },
               },
+              deliveryZone: {
+                type: 'string',
+                description: 'Delivery zone identifier (e.g., A, B, C, etc.)',
+              },
               notes: { type: 'string' },
             },
-            required: ['storeId', 'shippingAddress'],
+            required: ['storeId', 'shippingAddress', 'deliveryZone'],
           },
         },
       },
@@ -63,6 +67,11 @@ registry.registerPath({
                   status: { type: 'string' },
                   paymentStatus: { type: 'string' },
                   total: { type: 'number' },
+                  deliveryZone: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Delivery zone identifier',
+                  },
                   items: {
                     type: 'array',
                     items: {
@@ -159,6 +168,11 @@ registry.registerPath({
                   tax: { type: 'number' },
                   shipping: { type: 'number' },
                   currency: { type: 'string' },
+                  deliveryZone: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Delivery zone identifier',
+                  },
                   createdAt: { type: 'string' },
                   items: {
                     type: 'array',
@@ -263,6 +277,11 @@ registry.registerPath({
                     status: { type: 'string' },
                     paymentStatus: { type: 'string' },
                     total: { type: 'number' },
+                    deliveryZone: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'Delivery zone identifier',
+                    },
                     customer: {
                       type: 'object',
                       properties: {
@@ -320,6 +339,79 @@ registry.registerPath({
                     status: { type: 'string' },
                     count: { type: 'number' },
                     revenue: { type: 'number' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/vendor/orders/{orderId}',
+  tags: ['vendor-orders'],
+  security: [{ bearerAuth: [] }],
+  request: {
+    params: schema.OrderIdParam,
+  },
+  responses: {
+    200: {
+      description: 'Vendor order details retrieved successfully',
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              order: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string' },
+                  status: { type: 'string' },
+                  paymentStatus: { type: 'string' },
+                  total: { type: 'number' },
+                  subtotal: { type: 'number' },
+                  tax: { type: 'number' },
+                  shipping: { type: 'number' },
+                  currency: { type: 'string' },
+                  deliveryZone: {
+                    type: 'string',
+                    nullable: true,
+                    description: 'Delivery zone identifier',
+                  },
+                  createdAt: { type: 'string' },
+                  customer: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      email: { type: 'string' },
+                      firstName: { type: 'string' },
+                      lastName: { type: 'string' },
+                    },
+                  },
+                  items: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        productId: { type: 'string' },
+                        quantity: { type: 'number' },
+                        price: { type: 'number' },
+                        total: { type: 'number' },
+                        product: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string' },
+                            name: { type: 'string' },
+                            imageUrl: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
                   },
                 },
               },

@@ -44,6 +44,9 @@ tags:
     -
         name: notifications
         description: 'Notification management endpoints'
+    -
+        name: payment
+        description: 'Paystack payment integration endpoints'
 components:
     securitySchemes:
         bearerAuth:
@@ -596,6 +599,28 @@ components:
                     description: 'Resource ID'
             required:
                 - id
+        InitializePaymentBody:
+            type: object
+            properties:
+                orderId:
+                    type: string
+                    minLength: 1
+                email:
+                    type: string
+                    format: email
+                amount:
+                    type: number
+                    exclusiveMinimum: 0
+                callbackUrl:
+                    type: string
+                    format: uri
+                metadata:
+                    type: object
+                    additionalProperties: {}
+            required:
+                - orderId
+                - email
+                - amount
         LoginBody:
             type: object
             properties:
@@ -942,6 +967,10 @@ components:
                                 type: integer
                             currency:
                                 type: string
+                            deliveryZone:
+                                type:
+                                    - string
+                                    - 'null'
                             items:
                                 type: array
                                 items:
@@ -968,6 +997,7 @@ components:
                             - shipping
                             - discount
                             - currency
+                            - deliveryZone
                             - items
                             - createdAt
                             - updatedAt
@@ -1027,6 +1057,10 @@ components:
                     type: integer
                 currency:
                     type: string
+                deliveryZone:
+                    type:
+                        - string
+                        - 'null'
                 items:
                     type: array
                     items:
@@ -1065,6 +1099,7 @@ components:
                 - shipping
                 - discount
                 - currency
+                - deliveryZone
                 - items
                 - createdAt
                 - updatedAt
@@ -1169,6 +1204,78 @@ components:
                     pattern: ^\d+$
                     default: '20'
                     description: 'Number of items per page'
+        PaymentDetailsResponse:
+            type: object
+            properties:
+                payment: {}
+        PaymentHistoryQuery:
+            type: object
+            properties:
+                q:
+                    type: string
+                    description: 'Search query'
+                page:
+                    type: string
+                    pattern: ^\d+$
+                    default: '1'
+                    description: '1-based page number'
+                limit:
+                    type: string
+                    pattern: ^\d+$
+                    default: '20'
+                    description: 'Number of items per page'
+        PaymentHistoryResponse:
+            type: object
+            properties:
+                payments:
+                    type: array
+                    items: {}
+                pagination:
+                    type: object
+                    properties:
+                        page:
+                            type: number
+                        limit:
+                            type: number
+                        total:
+                            type: number
+                        totalPages:
+                            type: number
+                    required:
+                        - page
+                        - limit
+                        - total
+                        - totalPages
+            required:
+                - payments
+                - pagination
+        PaymentIdParam:
+            type: object
+            properties:
+                paymentId:
+                    type: string
+                    description: 'Payment ID'
+            required:
+                - paymentId
+        PaymentResponse:
+            type: object
+            properties:
+                authorizationUrl:
+                    type: string
+                reference:
+                    type: string
+            required:
+                - authorizationUrl
+                - reference
+        PaymentVerificationResponse:
+            type: object
+            properties:
+                status:
+                    type: string
+                order: {}
+                payment: {}
+            required:
+                - status
         ProductBase:
             type: object
             properties:
@@ -1564,6 +1671,22 @@ components:
                     type: string
             required:
                 - refreshToken
+        RefundPaymentBody:
+            type: object
+            properties:
+                reason:
+                    type: string
+                    minLength: 1
+            required:
+                - reason
+        RefundResponse:
+            type: object
+            properties:
+                message:
+                    type: string
+                payment: {}
+            required:
+                - message
         RegisterBody:
             type: object
             properties:
@@ -2145,6 +2268,21 @@ components:
             required:
                 - orderId
                 - rating
+        VerifyPaymentBody:
+            type: object
+            properties:
+                reference:
+                    type: string
+                    minLength: 1
+            required:
+                - reference
+        WebhookResponse:
+            type: object
+            properties:
+                message:
+                    type: string
+            required:
+                - message
     parameters: {}
 paths:
     /auth/register:
@@ -4634,11 +4772,15 @@ paths:
                                 billingAddress:
                                     type: object
                                     properties: {street: {type: string}, city: {type: string}, state: {type: string}, postalCode: {type: string}, country: {type: string}}
+                                deliveryZone:
+                                    type: string
+                                    description: 'Delivery zone identifier (e.g., A, B, C, etc.)'
                                 notes:
                                     type: string
                             required:
                                 - storeId
                                 - shippingAddress
+                                - deliveryZone
             responses:
                 '200':
                     description: 'Order created successfully'
@@ -4648,7 +4790,7 @@ paths:
                                 type: object
                                 properties:
                                     message: {type: string}
-                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}}}}}}
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, deliveryZone: {type: string, nullable: true, description: 'Delivery zone identifier'}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}}}}}}
         get:
             tags:
                 - orders
@@ -4750,7 +4892,7 @@ paths:
                             schema:
                                 type: object
                                 properties:
-                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, subtotal: {type: number}, tax: {type: number}, shipping: {type: number}, currency: {type: string}, createdAt: {type: string}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}, product: {type: object, properties: {id: {type: string}, name: {type: string}, imageUrl: {type: string}}}}}}}}
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, subtotal: {type: number}, tax: {type: number}, shipping: {type: number}, currency: {type: string}, deliveryZone: {type: string, nullable: true, description: 'Delivery zone identifier'}, createdAt: {type: string}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}, product: {type: object, properties: {id: {type: string}, name: {type: string}, imageUrl: {type: string}}}}}}}}
         delete:
             tags:
                 - orders
@@ -4898,7 +5040,7 @@ paths:
                             schema:
                                 type: object
                                 properties:
-                                    orders: {type: array, items: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, customer: {type: object, properties: {id: {type: string}, email: {type: string}, firstName: {type: string}, lastName: {type: string}}}, createdAt: {type: string}}}}
+                                    orders: {type: array, items: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, deliveryZone: {type: string, nullable: true, description: 'Delivery zone identifier'}, customer: {type: object, properties: {id: {type: string}, email: {type: string}, firstName: {type: string}, lastName: {type: string}}}, createdAt: {type: string}}}}
                                     pagination: {type: object, properties: {page: {type: number}, limit: {type: number}, total: {type: number}, totalPages: {type: number}}}
     /vendor/orders/stats:
         get:
@@ -4929,6 +5071,31 @@ paths:
                                     totalOrders: {type: number}
                                     totalRevenue: {type: number}
                                     byStatus: {type: array, items: {type: object, properties: {status: {type: string}, count: {type: number}, revenue: {type: number}}}}
+    '/vendor/orders/{orderId}':
+        get:
+            tags:
+                - vendor-orders
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Order ID'
+                    required: true
+                    description: 'Order ID'
+                    name: orderId
+                    in: path
+            responses:
+                '200':
+                    description: 'Vendor order details retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    order: {type: object, properties: {id: {type: string}, status: {type: string}, paymentStatus: {type: string}, total: {type: number}, subtotal: {type: number}, tax: {type: number}, shipping: {type: number}, currency: {type: string}, deliveryZone: {type: string, nullable: true, description: 'Delivery zone identifier'}, createdAt: {type: string}, customer: {type: object, properties: {id: {type: string}, email: {type: string}, firstName: {type: string}, lastName: {type: string}}}, items: {type: array, items: {type: object, properties: {id: {type: string}, productId: {type: string}, quantity: {type: number}, price: {type: number}, total: {type: number}, product: {type: object, properties: {id: {type: string}, name: {type: string}, imageUrl: {type: string}}}}}}}}
     /customer/orders:
         get:
             tags:
@@ -6270,4 +6437,282 @@ paths:
                     description: 'Unauthorized - Authentication required'
                 '500':
                     description: 'Internal server error'
+    /payments/initialize:
+        post:
+            tags:
+                - payment
+            summary: 'Initialize Paystack payment'
+            description: 'Initialize a new payment with Paystack for an order'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                orderId:
+                                    type: string
+                                    minLength: 1
+                                email:
+                                    type: string
+                                    format: email
+                                amount:
+                                    type: number
+                                    exclusiveMinimum: 0
+                                callbackUrl:
+                                    type: string
+                                    format: uri
+                                metadata:
+                                    type: object
+                                    additionalProperties: {}
+                            required:
+                                - orderId
+                                - email
+                                - amount
+            responses:
+                '200':
+                    description: 'Payment initialized successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    authorizationUrl: {type: string}
+                                    reference: {type: string}
+                                required:
+                                    - authorizationUrl
+                                    - reference
+                '400':
+                    description: 'Bad request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /payments/verify:
+        post:
+            tags:
+                - payment
+            summary: 'Verify payment status'
+            description: 'Verify the status of a payment using the reference'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                reference:
+                                    type: string
+                                    minLength: 1
+                            required:
+                                - reference
+            responses:
+                '200':
+                    description: 'Payment verified successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    status: {type: string}
+                                    order: {}
+                                    payment: {}
+                                required:
+                                    - status
+                '400':
+                    description: 'Bad request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /payments/history:
+        get:
+            tags:
+                - payment
+            summary: 'Get payment history'
+            description: 'Get the payment history for the authenticated user'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Search query'
+                    required: false
+                    description: 'Search query'
+                    name: q
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                        default: '1'
+                        description: '1-based page number'
+                    required: false
+                    description: '1-based page number'
+                    name: page
+                    in: query
+                -
+                    schema:
+                        type: string
+                        pattern: ^\d+$
+                        default: '20'
+                        description: 'Number of items per page'
+                    required: false
+                    description: 'Number of items per page'
+                    name: limit
+                    in: query
+            responses:
+                '200':
+                    description: 'Payment history retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    payments: {type: array, items: {}}
+                                    pagination: {type: object, properties: {page: {type: number}, limit: {type: number}, total: {type: number}, totalPages: {type: number}}, required: [page, limit, total, totalPages]}
+                                required:
+                                    - payments
+                                    - pagination
+                '500':
+                    description: 'Internal server error'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/payments/{paymentId}':
+        get:
+            tags:
+                - payment
+            summary: 'Get payment details'
+            description: 'Get detailed information about a specific payment'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Payment ID'
+                    required: true
+                    description: 'Payment ID'
+                    name: paymentId
+                    in: path
+            responses:
+                '200':
+                    description: 'Payment details retrieved successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    payment: {}
+                '400':
+                    description: 'Bad request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    '/payments/{paymentId}/refund':
+        post:
+            tags:
+                - payment
+            summary: 'Refund payment'
+            description: 'Process a refund for a payment'
+            security:
+                -
+                    bearerAuth: []
+            parameters:
+                -
+                    schema:
+                        type: string
+                        description: 'Payment ID'
+                    required: true
+                    description: 'Payment ID'
+                    name: paymentId
+                    in: path
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                reason:
+                                    type: string
+                                    minLength: 1
+                            required:
+                                - reason
+            responses:
+                '200':
+                    description: 'Refund processed successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    payment: {}
+                                required:
+                                    - message
+                '400':
+                    description: 'Bad request'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+    /payments/webhook:
+        post:
+            tags:
+                - payment
+            summary: 'Paystack webhook handler'
+            description: 'Handle Paystack webhook events for payment updates'
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            description: 'Paystack webhook payload'
+            responses:
+                '200':
+                    description: 'Webhook processed successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                required:
+                                    - message
+                '401':
+                    description: 'Invalid signature'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    error: {type: string}
+                '500':
+                    description: 'Internal server error'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
 webhooks: {}

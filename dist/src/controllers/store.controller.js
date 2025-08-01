@@ -82,6 +82,7 @@ export async function createStore(req, res) {
         data: {
             ...data,
             owner: { connect: { id: userId } },
+            vendorId: userId, // Set vendorId for consistency
         },
         include: {
             owner: {

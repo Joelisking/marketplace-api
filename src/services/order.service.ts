@@ -29,6 +29,7 @@ export const CreateOrderSchema = z.object({
       country: z.string().default('Nigeria'),
     })
     .optional(),
+  deliveryZone: z.string().min(1, 'Delivery zone is required'),
   notes: z.string().optional(),
 });
 
@@ -70,6 +71,7 @@ export interface OrderWithDetails {
   notes?: string;
   shippingAddress?: any;
   billingAddress?: any;
+  deliveryZone?: string;
   paymentReference?: string;
   paymentProvider?: string;
   estimatedDelivery?: Date;
@@ -144,6 +146,7 @@ export async function createOrder(
         notes: validatedRequest.notes,
         shippingAddress: validatedRequest.shippingAddress,
         billingAddress: validatedRequest.billingAddress || validatedRequest.shippingAddress,
+        deliveryZone: validatedRequest.deliveryZone,
       },
     });
 
