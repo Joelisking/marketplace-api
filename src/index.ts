@@ -20,6 +20,7 @@ import customerRoutes from './routes/customer.routes';
 import notificationRoutes from './routes/notification.routes';
 import vendorOnboardingRoutes from './routes/vendor-onboarding.routes';
 import bankVerificationRoutes from './routes/bank-verification.routes';
+import otpRoutes from './routes/otp.routes';
 import { errorHandler } from './middlewares/error-handler';
 import { initializeBucket } from './services/upload.service';
 
@@ -55,6 +56,7 @@ app.use('/', customerRoutes);
 app.use('/', notificationRoutes);
 app.use('/vendor-onboarding', vendorOnboardingRoutes);
 app.use('/bank-verification', bankVerificationRoutes);
+app.use('/otp', otpRoutes);
 
 // Global error handling middleware
 app.use(errorHandler);
