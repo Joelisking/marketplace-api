@@ -14,6 +14,8 @@ import {
 } from '../schema';
 import { signAccess, signRefresh, verifyToken } from '../utils/jwt';
 import { asyncHandler, createError } from '../middlewares/error-handler';
+import { otpService } from '../services/otp.service';
+import { emailService } from '../services/email.service';
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const body = RegisterBody.parse(req.body);
@@ -30,14 +32,38 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
       firstName: body.firstName,
       lastName: body.lastName,
       phone: body.phone,
+      emailVerified: false,
+      phoneVerified: false,
     },
   });
+
+  // Send email verification OTP
+  const otpResult = await otpService.sendEmailOtp(
+    user.email,
+    'REGISTRATION',
+    user.id,
+    user.firstName || undefined
+  );
+
+  if (!otpResult.success) {
+    // Log error but don't fail registration
+    console.error('Failed to send verification email:', otpResult.message);
+  }
 
   const accessToken = signAccess(user);
   const refreshToken = signRefresh({ sub: user.id });
 
-  const response: z.infer<typeof AuthResponse> = { accessToken, refreshToken, user };
-  res.status(201).json(response);
+  const response: z.infer<typeof AuthResponse> = {
+    accessToken,
+    refreshToken,
+    user,
+  };
+
+  res.status(201).json({
+    ...response,
+    message: 'Registration successful. Please check your email for verification code.',
+    emailVerificationSent: otpResult.success,
+  });
 });
 
 export async function login(req: Request, res: Response) {
@@ -54,6 +80,10 @@ export async function login(req: Request, res: Response) {
       firstName: true,
       lastName: true,
       phone: true,
+      emailVerified: true,
+      phoneVerified: true,
+      emailVerifiedAt: true,
+      phoneVerifiedAt: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -130,6 +160,10 @@ export async function me(req: Request, res: Response) {
       firstName: true,
       lastName: true,
       phone: true,
+      emailVerified: true,
+      phoneVerified: true,
+      emailVerifiedAt: true,
+      phoneVerifiedAt: true,
       createdAt: true,
       updatedAt: true,
     },

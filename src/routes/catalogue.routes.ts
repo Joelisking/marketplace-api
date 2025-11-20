@@ -4,6 +4,7 @@ import * as store from '../controllers/store.controller';
 import { registry } from '../lib/openapi';
 import * as schema from '../schema';
 import { authGuard, requireVendor, requireProductOwnership } from '../middlewares/auth';
+import { requirePhoneVerification } from '../middlewares/verification';
 
 // OpenAPI registration for catalogue endpoints
 registry.registerPath({
@@ -502,7 +503,7 @@ const r = Router();
 
 // Product routes
 r.get('/products', prod.getProducts);
-r.post('/products', authGuard, requireVendor, prod.createProduct);
+r.post('/products', authGuard, requireVendor, requirePhoneVerification, prod.createProduct);
 r.get('/products/:id', prod.getProductById);
 r.put('/products/:id', authGuard, requireProductOwnership, prod.updateProduct);
 r.delete('/products/:id', authGuard, requireProductOwnership, prod.deleteProduct);

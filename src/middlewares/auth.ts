@@ -187,3 +187,25 @@ export function requireProductOwnership(req: Request, res: Response, next: NextF
       res.status(500).json({ message: 'Internal server error' });
     });
 }
+
+// Alias for authGuard - used for consistency across routes
+export const authenticate = authGuard;
+
+// Optional authentication - sets user if token is valid but doesn't block
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+  const header = req.headers.authorization || '';
+  const [, token] = header.split(' ');
+
+  if (!token) {
+    // No token provided, continue without user
+    return next();
+  }
+
+  try {
+    req.user = verifyToken(token);
+    next();
+  } catch {
+    // Invalid token, continue without user
+    next();
+  }
+}

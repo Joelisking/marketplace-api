@@ -2,6 +2,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { authGuard } from '../middlewares/auth';
+import { requirePhoneVerification } from '../middlewares/verification';
 import { registry } from '../lib/openapi';
 import * as schema from '../schema';
 import {
@@ -70,7 +71,7 @@ registry.registerPath({
   },
 });
 
-router.post('/payments/initialize', authGuard, async (req, res) => {
+router.post('/payments/initialize', authGuard, requirePhoneVerification, async (req, res) => {
   try {
     const body = InitializePaymentBody.parse(req.body);
     const userId = (req as any).user.id;
