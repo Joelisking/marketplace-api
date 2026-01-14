@@ -79,6 +79,13 @@ class MockEmailProvider implements EmailProvider {
   ): Promise<EmailResult> {
     logger.info(`[MOCK EMAIL] To: ${to}`);
     logger.info(`[MOCK EMAIL] Subject: ${subject}`);
+
+    // Extract verification code if present (for OTP emails)
+    const codeMatch = html.match(/<h2[^>]*>(\d{6})<\/h2>/);
+    if (codeMatch) {
+      logger.info(`[MOCK EMAIL] ✅ VERIFICATION CODE: ${codeMatch[1]}`);
+    }
+
     logger.info(`[MOCK EMAIL] HTML: ${html.substring(0, 100)}...`);
 
     return {

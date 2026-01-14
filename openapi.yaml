@@ -30,6 +30,9 @@ tags:
         name: upload
         description: 'Image upload endpoints'
     -
+        name: enhanced-upload
+        description: 'Enhanced image upload and processing endpoints'
+    -
         name: cart
         description: 'Cart management endpoints'
     -
@@ -47,6 +50,9 @@ tags:
     -
         name: payment
         description: 'Paystack payment integration endpoints'
+    -
+        name: OTP
+        description: 'OTP verification endpoints for email and phone'
 components:
     securitySchemes:
         bearerAuth:
@@ -4102,6 +4108,169 @@ paths:
                                 type: object
                                 properties:
                                     message: {type: string}
+    /enhanced-upload/url:
+        post:
+            tags:
+                - enhanced-upload
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                fileName:
+                                    type: string
+                                contentType:
+                                    type: string
+                                fileSize:
+                                    type: number
+                                processingOptions:
+                                    type: object
+                                    properties: {width: {type: number}, height: {type: number}, quality: {type: number}, format: {type: string, enum: [jpeg, png, webp, avif]}, fit: {type: string, enum: [cover, contain, fill, inside, outside]}, position: {type: string}, background: {type: string}, stripMetadata: {type: boolean}}
+                                generateThumbnail:
+                                    type: boolean
+                            required:
+                                - fileName
+                                - contentType
+                                - fileSize
+            responses:
+                '200':
+                    description: 'Enhanced upload URL generated successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    uploadUrl: {type: string}
+                                    fileUrl: {type: string}
+                                    fileName: {type: string}
+                                    thumbnailUrl: {type: string}
+                                    thumbnailFileName: {type: string}
+                                    optimizedFormat: {type: string}
+                                    originalFormat: {type: string}
+                                    width: {type: number}
+                                    height: {type: number}
+                                    size: {type: number}
+                                    thumbnailSize: {type: number}
+                                    expiresIn: {type: number}
+    /enhanced-upload/direct:
+        post:
+            tags:
+                - enhanced-upload
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            properties:
+                                image:
+                                    type: string
+                                    format: binary
+                                processingOptions:
+                                    type: string
+                            required:
+                                - image
+            responses:
+                '200':
+                    description: 'Image uploaded and processed successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    fileUrl: {type: string}
+                                    fileName: {type: string}
+                                    thumbnailUrl: {type: string}
+                                    optimizedFormat: {type: string}
+                                    originalFormat: {type: string}
+                                    width: {type: number}
+                                    height: {type: number}
+                                    size: {type: number}
+                                    thumbnailSize: {type: number}
+    /enhanced-upload/bulk:
+        post:
+            tags:
+                - enhanced-upload
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    multipart/form-data:
+                        schema:
+                            type: object
+                            properties:
+                                images:
+                                    type: array
+                                    items: {type: string, format: binary}
+                                processingOptions:
+                                    type: string
+                            required:
+                                - images
+            responses:
+                '200':
+                    description: 'Bulk images uploaded and processed successfully'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    message: {type: string}
+                                    results: {type: array, items: {type: object, properties: {fileUrl: {type: string}, fileName: {type: string}, thumbnailUrl: {type: string}, optimizedFormat: {type: string}, originalFormat: {type: string}, width: {type: number}, height: {type: number}, size: {type: number}}}}
+                                    summary: {type: object, properties: {total: {type: number}, successful: {type: number}, failed: {type: number}}}
+    /enhanced-upload/capabilities:
+        get:
+            tags:
+                - enhanced-upload
+            responses:
+                '200':
+                    description: 'Image processing capabilities'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    supportedFormats: {type: array, items: {type: string}}
+                                    recommendedFormat: {type: string}
+                                    maxFileSize: {type: number}
+                                    maxDimensions: {type: object, properties: {width: {type: number}, height: {type: number}}}
+                                    thumbnailDimensions: {type: object, properties: {width: {type: number}, height: {type: number}}}
+                                    qualitySettings: {type: object, properties: {jpeg: {type: number}, webp: {type: number}, avif: {type: number}}}
+                                    features: {type: object, properties: {imageResizing: {type: boolean}, formatConversion: {type: boolean}, qualityOptimization: {type: boolean}, thumbnailGeneration: {type: boolean}, metadataStripping: {type: boolean}, bulkUpload: {type: boolean}, cdnIntegration: {type: boolean}}}
+    /enhanced-upload/responsive:
+        post:
+            tags:
+                - enhanced-upload
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                imageUrl:
+                                    type: string
+                                sizes:
+                                    type: array
+                                    items: {type: string}
+                            required:
+                                - imageUrl
+            responses:
+                '200':
+                    description: 'Responsive image URLs generated'
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                properties:
+                                    responsiveUrls: {type: object, properties: {original: {type: string}, thumbnail: {type: string}, small: {type: string}, medium: {type: string}, large: {type: string}}}
+                                    sizes: {type: array, items: {type: string}}
     '/vendor/products/{productId}/images':
         post:
             tags:
@@ -6715,4 +6884,200 @@ paths:
                                 type: object
                                 properties:
                                     message: {type: string}
+    /otp/send-email:
+        post:
+            tags:
+                - OTP
+            summary: 'Send OTP to email'
+            description: 'Send a verification code to an email address'
+            security:
+                -
+                    bearerAuth: []
+                - {}
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - email
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP sent successfully'
+                '400':
+                    description: 'Bad request'
+                '500':
+                    description: 'Internal server error'
+    /otp/verify-email:
+        post:
+            tags:
+                - OTP
+            summary: 'Verify email OTP'
+            description: 'Verify an OTP code sent to email'
+            security:
+                -
+                    bearerAuth: []
+                - {}
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                code:
+                                    type: string
+                                    pattern: '^\d{6}$'
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - email
+                                - code
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP verified successfully'
+                '400':
+                    description: 'Invalid or expired OTP'
+                '500':
+                    description: 'Internal server error'
+    /otp/resend-email:
+        post:
+            tags:
+                - OTP
+            summary: 'Resend email OTP'
+            description: 'Resend verification code to email'
+            security:
+                -
+                    bearerAuth: []
+                - {}
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                email:
+                                    type: string
+                                    format: email
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - email
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP resent successfully'
+                '400':
+                    description: 'Bad request'
+                '500':
+                    description: 'Internal server error'
+    /otp/send-phone:
+        post:
+            tags:
+                - OTP
+            summary: 'Send OTP to phone'
+            description: 'Send a verification code to a phone number (requires authentication)'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                phone:
+                                    type: string
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - phone
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP sent successfully'
+                '401':
+                    description: Unauthorized
+                '500':
+                    description: 'Internal server error'
+    /otp/verify-phone:
+        post:
+            tags:
+                - OTP
+            summary: 'Verify phone OTP'
+            description: 'Verify an OTP code sent to phone (requires authentication)'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                phone:
+                                    type: string
+                                code:
+                                    type: string
+                                    pattern: '^\d{6}$'
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - phone
+                                - code
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP verified successfully'
+                '400':
+                    description: 'Invalid or expired OTP'
+                '401':
+                    description: Unauthorized
+                '500':
+                    description: 'Internal server error'
+    /otp/resend-phone:
+        post:
+            tags:
+                - OTP
+            summary: 'Resend phone OTP'
+            description: 'Resend verification code to phone (requires authentication)'
+            security:
+                -
+                    bearerAuth: []
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                phone:
+                                    type: string
+                                purpose:
+                                    type: string
+                                    enum: [REGISTRATION, PHONE_VERIFICATION, PASSWORD_RESET, TRANSACTION]
+                            required:
+                                - phone
+                                - purpose
+            responses:
+                '200':
+                    description: 'OTP resent successfully'
+                '401':
+                    description: Unauthorized
+                '500':
+                    description: 'Internal server error'
 webhooks: {}

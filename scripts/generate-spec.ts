@@ -12,6 +12,7 @@ import '../src/routes/catalogue.routes'; // Ensure catalogue OpenAPI registratio
 import '../src/routes/vendor.routes'; // Ensure vendor OpenAPI registrations are included
 import '../src/routes/analytics.routes'; // Ensure analytics OpenAPI registrations are included
 import '../src/routes/upload.routes'; // Ensure upload OpenAPI registrations are included
+import '../src/routes/enhanced-upload.routes'; // Ensure enhanced upload OpenAPI registrations are included
 import '../src/routes/product-image.routes';
 import '../src/routes/cart.routes'; // Ensure cart OpenAPI registrations are included
 import '../src/routes/enhanced-cart.routes'; // Ensure enhanced cart OpenAPI registrations are included
@@ -22,6 +23,7 @@ import '../src/routes/super-admin.routes'; // Ensure super admin OpenAPI registr
 import '../src/routes/vendor-onboarding.routes'; // Ensure vendor-onboarding OpenAPI registrations are included
 import '../src/routes/bank-verification.routes'; // Ensure bank-verification OpenAPI registrations are included
 import '../src/routes/payment.routes'; // Ensure payment OpenAPI registrations are included
+import '../src/routes/otp.routes'; // Ensure OTP OpenAPI registrations are included
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -62,12 +64,14 @@ const doc = generator.generateDocument({
     { name: 'vendor', description: 'Vendor dashboard and management endpoints' },
     { name: 'analytics', description: 'Analytics and best-selling products endpoints' },
     { name: 'upload', description: 'Image upload endpoints' },
+    { name: 'enhanced-upload', description: 'Enhanced image upload and processing endpoints' },
     { name: 'cart', description: 'Cart management endpoints' },
     { name: 'Enhanced Cart', description: 'Enhanced cart with sync capabilities' },
     { name: 'orders', description: 'Order management endpoints' },
     { name: 'customer', description: 'Customer experience endpoints' },
     { name: 'notifications', description: 'Notification management endpoints' },
     { name: 'payment', description: 'Paystack payment integration endpoints' },
+    { name: 'OTP', description: 'OTP verification endpoints for email and phone' },
   ],
 });
 
